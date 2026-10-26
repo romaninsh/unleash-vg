@@ -8,7 +8,7 @@ import type { Archived } from "../vantage.gen";
 /** Archive (spec 05 screen 4): revive (editors, admins) and delete permanently (admins). */
 export const ArchivePage = observer(() => {
   const db = useDb();
-  const { items, loadState, error } = useCollection(db.archived.sort("archived_text", "desc"));
+  const { items, loadState, error } = useCollection(db.archived.sort("archived_at", "desc"));
   return (
     <section>
       <div className="toolbar"><h2>Archive</h2></div>
@@ -63,7 +63,7 @@ const ArchivedRow = observer(({ flag }: { flag: Archived }) => {
         <span className="flagname">{name}</span>
         {flag.description && <div className="desc">{flag.description}</div>}
       </td>
-      <td className="muted nowrap" title={flag.archived_text ?? ""}>{relTime(flag.archived_text)}</td>
+      <td className="muted nowrap" title={flag.archived_at ?? ""}>{relTime(flag.archived_at)}</td>
       <td>{flag.archived_by}</td>
       <td className="nowrap right">
         {canEditFlags && <button onClick={() => void revive()}>Revive</button>}{" "}

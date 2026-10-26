@@ -1,6 +1,8 @@
 # yaml-language-server: $schema=./table-schema-1.json
 # Web: every flag name the audit log mentions - live, archived and deleted flags - for the
-# audit log's flag picker. Read-only (a query table, grouped; one row per name).
+# audit log's flag picker. Read-only (a query table, grouped; one row per name). The id is
+# minted rather than `id_column: name`: a where on a query table's id column turns the
+# value into a record id, and the picker filters on name.
 datasource: flags
 title: Flag names in the audit log (web, read)
 columns:
@@ -13,11 +15,10 @@ surreal:
         .from(
             surreal::select()
                 .from("audit_event")
-                .expression(surreal::expr("flag").alias("name"))
-                .expression(surreal::expr("count()").alias("events"))
-                .where(surreal::ident("flag") != surreal::expr("NONE"))
+                .expression(surreal::ident("flag").alias("name"))
+                .expression(surreal::count().alias("events"))
+                .where(surreal::ident("flag") > "")   // events about brands, tokens or users have no flag
                 .group_by(surreal::ident("name"))
                 .subquery())
         .expression(surreal::fx("type::record", [surreal::expr("'flag_name'"), surreal::ident("name")]).alias("id"))
         .field("name").field("events")
-        .where(surreal::ident("name") != surreal::expr("NONE"))

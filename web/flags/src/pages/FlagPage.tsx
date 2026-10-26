@@ -9,7 +9,7 @@ import type { Draft } from "./card-draft";
 type Summary = {
   name: string | null; description: string | null; tags: string | null; stale: boolean | null;
   development: string | null; uat: string | null; production: string | null;
-  created_text: string | null; created_by: string | null;
+  created_at: string | null; created_by: string | null;
 };
 
 /** Flag detail (spec 05 screen 3): one card per environment, history, and the flag's details. */
@@ -54,7 +54,7 @@ export const FlagPage = observer(() => {
       </div>
       {archived && (
         <p className="banner">
-          Archived {relTime(archived.archived_text)} by {archived.archived_by ?? "someone"}. Apps don't receive it; the page is read-only.
+          Archived {relTime(archived.archived_at)} by {archived.archived_by ?? "someone"}. Apps don't receive it; the page is read-only.
           Revive or delete it from the <Link to="/archive">Archive</Link>.
         </p>
       )}
@@ -212,7 +212,7 @@ const About = observer(({ flag, archived }: { flag: Summary; archived: boolean }
         )}
       </div>
       {error && <p role="alert" className="error">{error}</p>}
-      <p className="muted small">Created {relTime(flag.created_text)} by {flag.created_by}</p>
+      <p className="muted small">Created {relTime(flag.created_at)} by {flag.created_by}</p>
     </div>
   );
 });
@@ -270,7 +270,7 @@ const History = observer(({ flag }: { flag: string }) => {
         <tbody>
           {items.map((h) => (
             <tr key={h.id}>
-              <td className="muted nowrap" title={h.created_text ?? ""}>{relTime(h.created_text)}</td>
+              <td className="muted nowrap" title={h.created_at ?? ""}>{relTime(h.created_at)}</td>
               <td className="nowrap">{h.created_by}</td>
               <td>{h.summary}</td>
             </tr>

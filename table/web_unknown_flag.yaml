@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# Web: flag names apps ask for that don't exist (usually typos), read-only.
+# Web: flag names apps ask for that don't exist (usually typos). Read-only through the API.
 datasource: flags
 title: Unknown flag names (web, read)
 columns:
@@ -8,10 +8,6 @@ columns:
   environment: { type: string }
   app_name: { type: string }
   count: { type: int }
-  last_seen_text: { type: string }
+  last_seen_at: { type: timestamp }
 surreal:
-  rhai: |
-    surreal::select()
-        .from("unknown_flag")
-        .field("id").field("name").field("environment").field("app_name").field("count")
-        .expression(surreal::expr("<string> last_seen_at").alias("last_seen_text"))
+  table: unknown_flag

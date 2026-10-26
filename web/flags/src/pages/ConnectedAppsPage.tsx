@@ -6,7 +6,7 @@ import { relTime } from "../format";
 export const ConnectedAppsPage = observer(() => {
   const db = useDb();
   const apps = useCollection(db.apps.sort("app_name", "asc"));
-  const unknown = useCollection(db.unknown_flags.sort("last_seen_text", "desc"));
+  const unknown = useCollection(db.unknown_flags.sort("last_seen_at", "desc"));
   return (
     <section>
       <div className="toolbar"><h2>Connected apps</h2></div>
@@ -42,7 +42,7 @@ export const ConnectedAppsPage = observer(() => {
               <td>{u.environment}</td>
               <td>{u.app_name}</td>
               <td>{u.count}</td>
-              <td className="muted" title={u.last_seen_text ?? ""}>{relTime(u.last_seen_text)}</td>
+              <td className="muted" title={u.last_seen_at ?? ""}>{relTime(u.last_seen_at)}</td>
             </tr>
           ))}
         </tbody>

@@ -1,25 +1,22 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# Web: brand overrides, read-only for everyone (a query table, so the API refuses writes).
-# Ids stay brand_override:..., which the page hands to override_edits. Keep the .where():
-# without one the API treats this query table as writable (FEEDBACK.md).
+# Web: brand overrides. Read-only through the API; ids stay brand_override:..., which the page
+# hands to override_edits.
 datasource: flags
 title: Brand overrides (web, read)
 columns:
   id: { type: string, flags: [id] }
   scope: { type: string }
   env_key: { type: string }
-  brand_key: { type: string }
-  brand_name: { type: string, flags: [title] }
+  brand: { type: string, flags: [hidden, calculated], references: { table: brand, kind: has_one, name: brand } }
+  brand.key: { type: string }
+  brand.display_name: { type: string }
+  brand.active: { type: bool }
   rollout: { type: int }
   allowlist: { type: string }
   rule_label: { type: string, lazy: !include ../script/rule_label.rhai }
-  brand_active: { type: bool }
+  # plain names for the web client
+  brand_key: { type: string, lazy: 'row["brand.key"]' }
+  brand_name: { type: string, flags: [title], lazy: 'row["brand.display_name"]' }
+  brand_active: { type: bool, lazy: 'row["brand.active"]' }
 surreal:
-  rhai: |
-    surreal::select()
-        .from("brand_override")
-        .field("id").field("scope").field("env_key").field("rollout").field("allowlist")
-        .expression(surreal::expr("brand.key").alias("brand_key"))
-        .expression(surreal::expr("brand.display_name").alias("brand_name"))
-        .expression(surreal::expr("brand.active").alias("brand_active"))
-        .where(surreal::ident("scope") != surreal::expr("NONE"))
+  table: brand_override

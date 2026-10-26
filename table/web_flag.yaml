@@ -16,8 +16,8 @@ columns:
   uat: { type: string }
   production: { type: string }
   override_count: { type: int }
-  last_seen_text: { type: string }
-  created_text: { type: string }
+  last_seen: { type: timestamp }
+  created_at: { type: timestamp }
   created_by: { type: string }
   # filters: name + description lower-cased, tags as ",a,b,", last seen or created (ISO text)
   search_text: { type: string }
@@ -34,9 +34,7 @@ surreal:
         .from("flag")
         .field("id").field("name").field("name_sort").field("description").field("tags")
         .field("stale").field("development").field("uat").field("production")
-        .field("override_count").field("created_by")
+        .field("override_count").field("last_seen").field("created_at").field("created_by")
         .field("search_text").field("tags_key").field("last_activity").field("last_seen_by_env")
         .field("development_brands").field("uat_brands").field("production_brands")
-        .expression(surreal::expr("IF last_seen = NONE THEN '' ELSE <string> last_seen END").alias("last_seen_text"))
-        .expression(surreal::expr("<string> created_at").alias("created_text"))
         .where(surreal::ident("archived") != true)

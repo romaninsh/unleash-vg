@@ -50,7 +50,7 @@ export const SettingsPage = observer(() => {
           <label>Flag counts as unused after (days)<input type="number" min={1} max={3650} value={val("unused_flag_days")} onChange={set("unused_flag_days")} /></label>
           <label>Keep usage data for (days)<input type="number" min={7} max={3650} value={val("metrics_retention_days")} onChange={set("metrics_retention_days")} /></label>
         </div>
-        <p className="muted small">Usage recorded since {s.usage_since_text?.slice(0, 10) ?? "—"}. "Last seen" times are kept regardless.</p>
+        <p className="muted small">Usage recorded since {s.usage_recording_since?.slice(0, 10) ?? "—"}. "Last seen" times are kept regardless.</p>
         {error && <p role="alert" className="error">{error}</p>}
         <div className="actions">
           {saved && <span className="rule-on">Saved ✓</span>}

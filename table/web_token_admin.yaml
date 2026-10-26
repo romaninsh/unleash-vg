@@ -8,12 +8,13 @@ columns:
   name: { type: string, flags: [title] }
   type: { type: string }
   environment: { type: string }
-  env_key: { type: string, expr: 'surreal::expr("<string> record::id(environment)")' }
+  # environment reads back as the record id environment:<key>
+  env_key: { type: string, lazy: 'let e = `${row.environment ?? ""}`; e.sub_string(e.index_of(":") + 1)' }
   source: { type: string }
   hint: { type: string }
   created_by: { type: string }
-  created_text: { type: string, expr: 'surreal::expr("<string> created_at")' }
-  last_used_text: { type: string, expr: 'surreal::expr("IF last_used_at = NONE THEN '''' ELSE <string> last_used_at END")' }
+  created_at: { type: timestamp, flags: [calculated] }
+  last_used_at: { type: timestamp, flags: [calculated] }
   new_secret: { type: string }
   admin_scope: { type: string }
   updated_by: { type: string }

@@ -22,7 +22,8 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
   const { canEditEnv, email } = usePermissions();
   const editable = canEditEnv(env) && !archived;
   const fe = useCollection(db.environments.where({ flag_name: flag, env_key: env })).items[0];
-  const ovs = useCollection(db.overrides.where({ scope: `${flag}@${env}` }).sort("brand_name", "asc")).items;
+  // brand_name comes through a relation, which the server can't sort on
+  const ovs = [...useCollection(db.overrides.where({ scope: `${flag}@${env}` })).items].sort((a, b) => (a.brand_name ?? "").localeCompare(b.brand_name ?? ""));
   const brands = useCollection(db.brands.sort("display_name", "asc")).items;
   const ref = useMemo(() => db.environment_edits.ref(`flag_env:${flag}@${env}`), [db, flag, env]);
   const edit = useRecord(ref);

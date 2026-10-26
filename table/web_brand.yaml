@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# Web: active brands, for the "add override" picker. Read-only.
+# Web: brands for the "add override" picker. Read-only through the API.
 datasource: flags
 title: Brands (web, read)
 columns:
@@ -9,6 +9,4 @@ columns:
   # inactive brands are listed too (the preview may ask about them); only active ones get new overrides
   active: { type: bool }
 surreal:
-  rhai: |
-    surreal::select().from("brand").field("id").field("key").field("display_name").field("active")
-        .where(surreal::ident("key") != surreal::expr("NONE"))
+  table: brand

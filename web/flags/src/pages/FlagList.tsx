@@ -9,7 +9,7 @@ import { NewFlagDialog } from "./NewFlagDialog";
 
 /** Every row is this tall (name over a one-line description), so the list can scroll virtually. */
 const ROW_HEIGHT = 46;
-type SortColumn = "name_sort" | "last_seen_text" | "created_text";
+type SortColumn = "name_sort" | "last_seen" | "created_at";
 type Sort = { column: SortColumn; dir: "asc" | "desc" };
 type Quick = "all" | "stale" | "overrides" | "unused";
 const DAY = 86_400_000;
@@ -102,12 +102,12 @@ export const FlagList = observer(() => {
     download(`flags-${fileStamp()}.csv`, toCsv(rows.map((f) => ({
       name: f.name, description: f.description, tags: (f.tags ?? "").split(",").filter(Boolean).join(";"),
       development: f.development, uat: f.uat, production: f.production,
-      last_seen: f.last_seen_text || "never", created: f.created_text,
+      last_seen: f.last_seen || "never", created: f.created_at,
     })), columns), "text/csv");
   }
 
   // "Not seen in N days" is only reliable once usage has been recorded for N days.
-  const since = config?.usage_since_text ? Date.parse(config.usage_since_text) : NaN;
+  const since = config?.usage_recording_since ? Date.parse(config.usage_recording_since) : NaN;
   const reliableFrom = since + unusedDays * DAY;
   const count = loading || error ? "" : `${total}${exact ? "" : "+"}${filtered && everything.lengthExact ? ` of ${everything.length}` : ""} flags`;
 
@@ -147,9 +147,9 @@ export const FlagList = observer(() => {
             <tr>
               <SortHeader label="Flag" column="name_sort" sort={sort} onSort={setSort} />
               {ENVIRONMENTS.map((e) => <th key={e}>{e}</th>)}
-              <SortHeader label="Last seen" column="last_seen_text" sort={sort} onSort={setSort} />
+              <SortHeader label="Last seen" column="last_seen" sort={sort} onSort={setSort} />
               <th>Tags</th>
-              <SortHeader label="Created" column="created_text" sort={sort} onSort={setSort} />
+              <SortHeader label="Created" column="created_at" sort={sort} onSort={setSort} />
             </tr>
           </thead>
           <tbody>
@@ -176,9 +176,9 @@ export const FlagList = observer(() => {
                     const brands = ({ development: f.development_brands, uat: f.uat_brands, production: f.production_brands })[e];
                     return <td key={e} className={`${ruleClass(f[e])} clip`} title={brands ? `${f[e]}\n${brands}` : f[e] ?? ""}>{f[e]}</td>;
                   })}
-                  <td className="muted clip" title={f.last_seen_by_env ?? ""}>{relTime(f.last_seen_text) || "never"}</td>
+                  <td className="muted clip" title={f.last_seen_by_env ?? ""}>{relTime(f.last_seen) || "never"}</td>
                   <td className="clip">{(f.tags ?? "").split(",").filter(Boolean).map((t) => <span key={t} className="tag">{t}</span>)}</td>
-                  <td className="muted nowrap" title={f.created_text ?? ""}>{f.created_text?.slice(0, 10)}</td>
+                  <td className="muted nowrap" title={f.created_at ?? ""}>{f.created_at?.slice(0, 10)}</td>
                 </tr>
               );
             })}

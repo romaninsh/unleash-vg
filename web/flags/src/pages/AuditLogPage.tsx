@@ -148,7 +148,7 @@ const EventRow = observer(({ h, brandName }: { h: History; brandName: string | n
   return (
     <>
       <tr className="clickable" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <td className="muted nowrap" title={h.created_text ?? ""}>{relTime(h.created_text)}</td>
+        <td className="muted nowrap" title={h.created_at ?? ""}>{relTime(h.created_at)}</td>
         <td className="nowrap">{h.created_by}</td>
         <td className="muted small nowrap">{h.type}</td>
         <td className="nowrap">{h.flag && <Link to={`/flags/${encodeURIComponent(h.flag)}`} onClick={(e) => e.stopPropagation()}>{h.flag}</Link>}</td>
@@ -159,7 +159,7 @@ const EventRow = observer(({ h, brandName }: { h: History; brandName: string | n
       {open && (
         <tr className="detail">
           <td colSpan={7}>
-            <p className="muted small">{h.created_text} · {h.type}</p>
+            <p className="muted small">{h.created_at} · {h.type}</p>
             {diff.length === 0 ? (
               <p className="muted">No before/after data for this event.</p>
             ) : (

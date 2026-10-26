@@ -90,8 +90,8 @@ const TokenRow = observer(({ t }: { t: TokenAdmin }) => {
       <td>{t.env_key}</td>
       <td className="mono small">{t.hint}</td>
       <td>{t.source}</td>
-      <td className="muted" title={t.created_text ?? ""}>{relTime(t.created_text)}</td>
-      <td className="muted" title={t.last_used_text ?? ""}>{relTime(t.last_used_text) || "never"}</td>
+      <td className="muted" title={t.created_at ?? ""}>{relTime(t.created_at)}</td>
+      <td className="muted" title={t.last_used_at ?? ""}>{relTime(t.last_used_at) || "never"}</td>
       <td className="right">
         <button
           className="danger"

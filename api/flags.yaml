@@ -16,7 +16,7 @@ entities:
   - name: flags
     observe: web_flag
     params:
-      columns: [name, name_sort, description, tags, stale, development, uat, production, override_count, last_seen_text, created_text, created_by,
+      columns: [name, name_sort, description, tags, stale, development, uat, production, override_count, last_seen, created_at, created_by,
                 search_text, tags_key, last_activity, last_seen_by_env, development_brands, uat_brands, production_brands]
       # search_text / tags_key / last_activity stand in for multi-column search and OR (FEEDBACK.md)
       filter: [name, stale, tags, search_text, tags_key, override_count, last_activity]
@@ -33,30 +33,32 @@ entities:
       default_sort: env_key
   - name: overrides
     observe: web_override
+    read_only: true
     params:
+      # brand_* come through the brand relation; the page sorts by brand_name itself
       columns: [scope, env_key, brand_key, brand_name, rollout, allowlist, rule_label, brand_active]
       filter: [scope]
-      default_sort: brand_name
-    api: { refresh: 3 }
   - name: brands
     observe: web_brand
+    read_only: true
     params:
       columns: [key, display_name, active]
       default_sort: display_name
     api: { load: instant }
   - name: history
     observe: web_history
+    read_only: true
     params:
-      columns: [created_at, created_text, created_by, flag, environment, brand, summary, type, pre_data, data]
+      columns: [created_at, created_by, flag, environment, brand, summary, type, pre_data, data]
       filter: [flag, created_by, environment, brand, type, summary, created_at]
       default_sort: -created_at
-    api: { collection_limit: 10000, refresh: 3 }   # export reads the whole filtered log; query table: re-read
+    api: { collection_limit: 10000 }   # export reads the whole filtered log
   - name: archived
     observe: web_archived
     params:
-      columns: [name, description, archived_text, archived_by, tags, stale, development, uat, production, created_text, created_by]
+      columns: [name, description, archived_at, archived_by, tags, stale, development, uat, production, created_at, created_by]
       filter: [name]
-      default_sort: -archived_text
+      default_sort: -archived_at
     api: { refresh: 3 }
   - name: apps
     observe: client_app
@@ -66,10 +68,10 @@ entities:
     api: { refresh: 10 }
   - name: unknown_flags
     observe: web_unknown_flag
+    read_only: true
     params:
-      columns: [name, environment, app_name, count, last_seen_text]
-      default_sort: -last_seen_text
-    api: { refresh: 10 }
+      columns: [name, environment, app_name, count, last_seen_at]
+      default_sort: -last_seen_at
   - name: tags
     observe: web_tag
     params:
@@ -78,8 +80,9 @@ entities:
     api: { refresh: 5 }
   - name: config
     observe: web_config
+    read_only: true
     params:
-      columns: [unused_flag_days, usage_since_text, brand_context_field, customer_context_field]
+      columns: [unused_flag_days, usage_recording_since, brand_context_field, customer_context_field]
     api: { load: instant }
   - name: compiled
     observe: web_compiled
@@ -123,25 +126,25 @@ entities:
   - name: brand_admin
     observe: web_brand_admin
     params:
-      columns: [key, display_name, active, admin_scope, created_text, overrides, updated_by]
+      columns: [key, display_name, active, admin_scope, created_at, updated_by]
       default_sort: key
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: token_admin
     observe: web_token_admin
     params:
-      columns: [name, type, environment, env_key, source, hint, created_by, created_text, last_used_text, new_secret, admin_scope, updated_by]
+      columns: [name, type, environment, env_key, source, hint, created_by, created_at, last_used_at, new_secret, admin_scope, updated_by]
       default_sort: name
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: user_admin
     observe: web_user_admin
     params:
-      columns: [name, email, role, editable_environments, active, must_change_password, new_password, admin_scope, last_login_text, password_changed_text, updated_by]
+      columns: [name, email, role, editable_environments, active, must_change_password, new_password, admin_scope, last_login_at, password_changed_at, updated_by]
       default_sort: name
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: settings_admin
     observe: web_settings
     params:
-      columns: [brand_context_field, customer_context_field, frontend_cors_origins, unused_flag_days, metrics_retention_days, admin_scope, usage_since_text, updated_by]
+      columns: [brand_context_field, customer_context_field, frontend_cors_origins, unused_flag_days, metrics_retention_days, admin_scope, usage_recording_since, updated_by]
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: environment_edits
     observe: web_env_edit

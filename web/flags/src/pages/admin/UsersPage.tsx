@@ -94,10 +94,10 @@ const UserRow = observer(({ u, onPassword }: { u: UserAdmin; onPassword: (pwd: s
       <td>{u.email}</td>
       <td><select value={curRole} onChange={(e) => setRole(e.target.value)} aria-label={`Role of ${u.email}`}>{ROLES.map((r) => <option key={r}>{r}</option>)}</select></td>
       <td>{curRole === "editor" ? <EnvPicker value={curEnvs} onChange={setEnvs} /> : <span className="muted">{curRole === "admin" ? "all" : "—"}</span>}</td>
-      <td className="muted">{relTime(u.last_login_text) || "never"}</td>
-      <td className="muted" title={u.password_changed_text ?? ""}>
-        {relTime(u.password_changed_text) || "never"}
-        {u.must_change_password && u.password_changed_text ? <span className="badge badge-stale">temporary</span> : null}
+      <td className="muted">{relTime(u.last_login_at) || "never"}</td>
+      <td className="muted" title={u.password_changed_at ?? ""}>
+        {relTime(u.password_changed_at) || "never"}
+        {u.must_change_password && u.password_changed_at ? <span className="badge badge-stale">temporary</span> : null}
       </td>
       <td>{u.active ? "yes" : "no"}</td>
       <td className="right nowrap">

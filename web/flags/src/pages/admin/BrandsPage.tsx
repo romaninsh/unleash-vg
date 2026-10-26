@@ -9,6 +9,9 @@ export const BrandsPage = observer(() => {
   const db = useDb();
   const { email } = usePermissions();
   const { items, error } = useCollection(db.brand_admin.sort("key", "asc"));
+  // overrides per brand key (one per flag environment)
+  const overrides = new Map<string, number>();
+  for (const o of useCollection(db.overrides.all).items) if (o.brand_key) overrides.set(o.brand_key, (overrides.get(o.brand_key) ?? 0) + 1);
   const [key, setKey] = useState("");
   const [name, setName] = useState("");
   const [addError, setAddError] = useState<string | null>(null);
@@ -34,7 +37,7 @@ export const BrandsPage = observer(() => {
       {error && <p role="alert" className="error">{error}</p>}
       <table className="grid">
         <thead><tr><th>Key</th><th>Name</th><th>Active</th><th>Flags with overrides</th><th /></tr></thead>
-        <tbody>{items.map((b) => <BrandRow key={b.id} b={b} by={email} />)}</tbody>
+        <tbody>{items.map((b) => <BrandRow key={b.id} b={b} overrides={overrides.get(b.key ?? "") ?? 0} by={email} />)}</tbody>
       </table>
       <form className="card addform" onSubmit={add}>
         <h3>Add brand</h3>
@@ -50,7 +53,7 @@ export const BrandsPage = observer(() => {
   );
 });
 
-const BrandRow = observer(({ b, by }: { b: BrandAdmin; by: string }) => {
+const BrandRow = observer(({ b, overrides, by }: { b: BrandAdmin; overrides: number; by: string }) => {
   const [name, setName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const run = async (p: Promise<{ ok: boolean; error?: { message: string } }>) => {
@@ -63,7 +66,7 @@ const BrandRow = observer(({ b, by }: { b: BrandAdmin; by: string }) => {
     if (name === null || !name.trim() || name === b.display_name) return setName(null);
     if (await run(b.patch({ display_name: name.trim(), updated_by: by }))) setName(null);
   };
-  const used = (b.overrides ?? 0) > 0;
+  const used = overrides > 0;
   return (
     <tr>
       <td className="mono">{b.key}</td>
@@ -84,7 +87,7 @@ const BrandRow = observer(({ b, by }: { b: BrandAdmin; by: string }) => {
           <input type="checkbox" checked={!!b.active} onChange={(e) => void run(b.patch({ active: e.target.checked, updated_by: by }))} /> {b.active ? "active" : "inactive"}
         </label>
       </td>
-      <td>{b.overrides}</td>
+      <td>{overrides}</td>
       <td className="right">
         <button
           className="danger"

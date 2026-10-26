@@ -7,7 +7,7 @@ columns:
   id: { type: string, flags: [id] }
   name: { type: string, flags: [title] }
   description: { type: string }
-  archived_text: { type: string }
+  archived_at: { type: timestamp }
   archived_by: { type: string }
   # for the archived flag's own (read-only) page
   tags: { type: string }
@@ -15,14 +15,13 @@ columns:
   development: { type: string }
   uat: { type: string }
   production: { type: string }
-  created_text: { type: string }
+  created_at: { type: timestamp }
   created_by: { type: string }
 surreal:
   rhai: |
     surreal::select()
         .from("flag")
-        .field("id").field("name").field("description").field("archived_by")
-        .field("tags").field("stale").field("development").field("uat").field("production").field("created_by")
-        .expression(surreal::expr("<string> created_at").alias("created_text"))
-        .expression(surreal::expr("IF archived_at = NONE THEN '' ELSE <string> archived_at END").alias("archived_text"))
+        .field("id").field("name").field("description").field("archived_at").field("archived_by")
+        .field("tags").field("stale").field("development").field("uat").field("production")
+        .field("created_at").field("created_by")
         .where(surreal::ident("archived") == true)
