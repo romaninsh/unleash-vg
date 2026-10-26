@@ -13,12 +13,12 @@ describe("demo sign-in", () => {
     vi.unstubAllEnvs();
   });
 
-  it("lists every seeded user with what they may do", () => {
+  it("lists every seeded user under their role with what they may not do", () => {
     render(<DemoUsers onPick={() => {}} />);
     expect(screen.getAllByRole("button")).toHaveLength(6);
-    expect(screen.getByRole("button", { name: /Admin.*admin/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Tom Berg.*editor.*development, uat/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Support Desk.*viewer/ })).toBeInTheDocument();
+    expect(screen.getAllByRole("heading").map((h) => h.textContent)).toEqual(["Admin", "Editors", "Viewers"]);
+    expect(screen.getByRole("button", { name: /Tom Berg.*production is read-only/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Support Desk.*Changes nothing/ })).toBeInTheDocument();
   });
 
   it("a click fills in that user's e-mail and the demo password", () => {

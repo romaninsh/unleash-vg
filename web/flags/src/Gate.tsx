@@ -45,16 +45,16 @@ function SignIn({ failed, detail }: { failed: boolean; detail?: string }) {
           <p role="alert" className="error" title={detail}>{message ?? "Invalid credentials"}</p>
         )}
         <button type="submit" className="primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
-        <p className="hint">Simulated sign-in for this preview: every staff account uses the password <b>demo</b>.</p>
-        {demoSignIn() && (
-          <DemoUsers
-            onPick={(pickedEmail, pickedPassword) => {
-              setEmail(pickedEmail);
-              setPassword(pickedPassword);
-            }}
-          />
-        )}
+        {!demoSignIn() && <p className="hint">Simulated sign-in for this preview: every staff account uses the password <b>demo</b>.</p>}
       </form>
+      {demoSignIn() && (
+        <DemoUsers
+          onPick={(pickedEmail, pickedPassword) => {
+            setEmail(pickedEmail);
+            setPassword(pickedPassword);
+          }}
+        />
+      )}
     </div>
   );
 }
