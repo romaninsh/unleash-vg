@@ -115,12 +115,12 @@ entities:
   - name: flag_edits
     observe: web_flag_edit
     params:
-      columns: [name, description, tags, stale, archived, created_by, updated_by, edit_scope]
+      columns: [name, description, tags, stale, archived, archived_by, created_by, edit_scope]
     api: { scope: { edit_scope: { in: $principal.flag_edit } } }
   - name: flag_deletes
     observe: web_flag_delete
     params:
-      columns: [name, updated_by, edit_scope]
+      columns: [name, edit_scope]
     api: { scope: { edit_scope: { in: $principal.admin } } }
   # ---- admin screens (admins only)
   - name: brand_admin

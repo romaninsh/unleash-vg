@@ -118,7 +118,7 @@ const FlagActions = observer(({ name, stale }: { name: string; stale: boolean })
   async function save(fields: { stale?: boolean; archived?: boolean }) {
     setOpen(false);
     if (!edit.value) return;
-    const r = await edit.value.patch({ ...fields, updated_by: email });
+    const r = await edit.value.patch(fields.archived ? { ...fields, archived_by: email } : fields);
     if (!r.ok) return setError(friendlyError(r.error.message));
     if (fields.archived) navigate("/archive");
   }
@@ -147,7 +147,7 @@ const FlagActions = observer(({ name, stale }: { name: string; stale: boolean })
 /** Description (inline edit), tags (chips + suggestions), created. */
 const About = observer(({ flag, archived }: { flag: Summary; archived: boolean }) => {
   const db = useDb();
-  const { canEditFlags, email } = usePermissions();
+  const { canEditFlags } = usePermissions();
   const can = canEditFlags && !archived;
   const editRef = useMemo(() => db.flag_edits.ref(`flag:${flag.name}`), [db, flag.name]);
   const edit = useRecord(editRef);
@@ -160,7 +160,7 @@ const About = observer(({ flag, archived }: { flag: Summary; archived: boolean }
   async function save(fields: { description?: string; tags?: string }) {
     if (!edit.value) return false;
     setError(null);
-    const r = await edit.value.patch({ ...fields, updated_by: email });
+    const r = await edit.value.patch(fields);
     if (!r.ok) { setError(friendlyError(r.error.message)); return false; }
     return true;
   }

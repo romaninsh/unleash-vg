@@ -83,9 +83,11 @@ check "a password set directly (desktop reset) is stamped too; other edits don't
         UPDATE app_user SET name = 'Ana S.' WHERE email = 'ana.silva@example.com';
         LET \$b = (SELECT VALUE password_changed_at FROM app_user WHERE email = 'ana.silva@example.com')[0];
         RETURN [\$a != NONE, \$a = \$b];")"
-Q "UPDATE flag:ex4 SET archived = true; DELETE flag:ex4;" >/dev/null
-check "deleting an archived flag removes its environments and keeps its history" "[0,true]" \
-  "$(Q "RETURN [count(SELECT id FROM flag_env WHERE flag = flag:ex4), count(SELECT id FROM audit_event WHERE flag = 'ex4') > 2];")"
+# (Vantage writes the audit log; here one entry stands in for the flag's history.)
+Q "CREATE audit_event SET type = 'feature-created', flag = 'ex4', summary = 'Flag ex4 created';
+   UPDATE flag:ex4 SET archived = true; DELETE flag:ex4;" >/dev/null
+check "deleting an archived flag removes its environments and keeps its history" "[0,1]" \
+  "$(Q "RETURN [count(SELECT id FROM flag_env WHERE flag = flag:ex4), count(SELECT id FROM audit_event WHERE flag = 'ex4' AND type = 'feature-created')];")"
 
 # whole-card save from the web: one write carries the default rule and the complete override set
 check "a card save applies the rule and every override in one write, under the person" \

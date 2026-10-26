@@ -123,9 +123,6 @@ DEFINE FIELD OVERWRITE override_count   ON flag TYPE int DEFAULT 0;
 DEFINE FIELD OVERWRITE last_seen        ON flag TYPE option<datetime>;
 DEFINE FIELD OVERWRITE last_seen_by_env ON flag TYPE string DEFAULT 'never';
 DEFINE FIELD OVERWRITE touched_at       ON flag TYPE option<datetime>;
--- Who is making the current change (set by the web app with each write, cleared by the events
--- after they log it). Missing = the desktop app, logged as 'admin'.
-DEFINE FIELD OVERWRITE updated_by       ON flag TYPE option<string>;
 -- Constant the web API scopes metadata edits on: editors and admins get ['all'], viewers [].
 DEFINE FIELD OVERWRITE edit_scope       ON flag TYPE string VALUE 'all';
 DEFINE FIELD OVERWRITE name_sort        ON flag TYPE string VALUE fn::natural_key($this.name);

@@ -6,7 +6,13 @@ title: Flags (web, delete)
 columns:
   id: { type: string, flags: [id] }
   name: { type: string, flags: [title, calculated] }
-  updated_by: { type: string }
+  # read for the audit entry of the delete
+  description: { type: string, flags: [calculated] }
+  tags: { type: string, flags: [calculated] }
   edit_scope: { type: string, flags: [calculated] }
 surreal:
   table: flag
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_flag.rhai

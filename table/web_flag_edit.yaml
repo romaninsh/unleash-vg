@@ -11,8 +11,13 @@ columns:
   tags: { type: string }
   stale: { type: bool }
   archived: { type: bool }
+  # sent with an archive (shown on the archive pages); the database clears it on revive
+  archived_by: { type: string }
   created_by: { type: string }
-  updated_by: { type: string }
   edit_scope: { type: string }
 surreal:
   table: flag
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_flag.rhai

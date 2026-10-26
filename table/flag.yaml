@@ -22,3 +22,7 @@ columns:
   created_by: { label: Created by, type: string, flags: [calculated] }
 references:
   environments: { table: flag_env, kind: has_many, foreign_key: flag }
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_flag.rhai

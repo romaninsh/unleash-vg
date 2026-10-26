@@ -32,21 +32,15 @@ DEFINE EVENT OVERWRITE brand_changes ON TABLE brand WHEN $event = 'DELETE' THEN 
 
 -- ---------------------------------------------------------------- flags
 
+-- Flag changes are audited by Vantage (table/flag.yaml log_changes:); this keeps the rules, the
+-- environments a new flag gets, the tag counts and the revision bumps.
 DEFINE EVENT OVERWRITE flag_changes ON TABLE flag THEN {
-    LET $by = $after.updated_by ?? $before.updated_by ?? 'admin';
-    -- keep a marker set on its own (the web app marks a flag just before deleting it)
-    IF $after.updated_by != NONE AND ($event = 'CREATE' OR $before.tags != $after.tags
-        OR $before.description != $after.description OR $before.stale != $after.stale OR $before.archived != $after.archived) {
-        UPDATE $after.id SET updated_by = NONE;
-    };
     IF $event = 'CREATE' {
         IF record::id($after.id) != $after.name { THROW 'A flag record id must equal its name'; };
         -- every environment, switch OFF, default rule ON (spec 05: "New flag")
         FOR $e IN (SELECT * FROM environment) {
             CREATE type::record('flag_env', $after.name + '@' + $e.key) SET flag = $after.id, environment = $e.id;
         };
-        fn::audit($by, 'feature-created', $after.name, NONE, NONE, 'Flag ' + $after.name + ' created', NONE,
-            { name: $after.name, description: $after.description, tags: $after.tags });
         IF !$after.archived { fn::count_tags(fn::list_items($after.tags), 1); };
         fn::bump_revision(NONE);
         fn::refresh_flag($after.id);
@@ -57,29 +51,15 @@ DEFINE EVENT OVERWRITE flag_changes ON TABLE flag THEN {
         -- tag counts cover live flags only
         IF !$before.archived { fn::count_tags($old, -1); };
         IF !$after.archived { fn::count_tags($new, 1); };
-        FOR $t IN array::complement($new, $old) {
-            fn::audit($by, 'feature-tagged', $after.name, NONE, NONE, $after.name + ': tag "' + $t + '" added', NONE, { tag: $t });
-        };
-        FOR $t IN array::complement($old, $new) {
-            fn::audit($by, 'feature-untagged', $after.name, NONE, NONE, $after.name + ': tag "' + $t + '" removed', { tag: $t }, NONE);
-        };
-        IF $before.description != $after.description {
-            fn::audit($by, 'feature-metadata-updated', $after.name, NONE, NONE, $after.name + ': description changed',
-                { description: $before.description }, { description: $after.description });
-        };
-        IF $before.stale != $after.stale {
-            fn::audit($by, IF $after.stale THEN 'feature-stale-on' ELSE 'feature-stale-off' END, $after.name, NONE, NONE,
-                $after.name + IF $after.stale THEN ' marked stale' ELSE ' no longer stale' END, NONE, NONE);
-        };
         IF $after.archived AND !$before.archived {
-            UPDATE $after.id SET archived_at = time::now(), archived_by = $by;
-            fn::audit($by, 'feature-archived', $after.name, NONE, NONE, $after.name + ' archived', NONE, NONE);
+            -- the web sends who archived it; the desktop sends nothing
+            UPDATE $after.id SET archived_at = time::now(), archived_by = $after.archived_by ?? 'admin';
         };
         IF !$after.archived AND $before.archived {
-            -- revive: rules come back, every switch OFF (spec 05 screen 4)
+            -- revive: rules come back, every switch OFF (spec 05 screen 4); the flag's own entry
+            -- says so, so the switches going off aren't logged one by one
             UPDATE $after.id SET archived_at = NONE, archived_by = NONE;
-            UPDATE flag_env SET enabled = false, updated_by = $by WHERE flag = $after.id AND enabled = true;
-            fn::audit($by, 'feature-revived', $after.name, NONE, NONE, $after.name + ' revived (all environments switched off)', NONE, NONE);
+            UPDATE flag_env SET enabled = false WHERE flag = $after.id AND enabled = true;
         };
         -- tags, description, stale and archive are all visible to SDKs
         fn::bump_revision(NONE);
@@ -89,8 +69,6 @@ DEFINE EVENT OVERWRITE flag_changes ON TABLE flag THEN {
         DELETE flag_env WHERE flag = $before.id;
         DELETE metric_hourly WHERE flag = $before.name;
         DELETE flag_last_seen WHERE flag = $before.name;
-        fn::audit($by, 'feature-deleted', $before.name, NONE, NONE, $before.name + ' deleted permanently',
-            { name: $before.name, description: $before.description, tags: $before.tags }, NONE);
     };
 };
 

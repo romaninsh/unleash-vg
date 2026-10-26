@@ -31,7 +31,7 @@ export const ArchivePage = observer(() => {
 const ArchivedRow = observer(({ flag }: { flag: Archived }) => {
   const db = useDb();
   const navigate = useNavigate();
-  const { canEditFlags, isAdmin, email } = usePermissions();
+  const { canEditFlags, isAdmin } = usePermissions();
   const [error, setError] = useState<string | null>(null);
   const name = flag.name ?? "";
 
@@ -40,7 +40,7 @@ const ArchivedRow = observer(({ flag }: { flag: Archived }) => {
     setError(null);
     const edit = await db.flag_edits.ref(`flag:${name}`).load();
     if (!edit) return setError("You can't revive flags.");
-    const r = await edit.patch({ archived: false, updated_by: email });
+    const r = await edit.patch({ archived: false });
     if (!r.ok) return setError(friendlyError(r.error.message));
     navigate(`/flags/${encodeURIComponent(name)}`);
   }
@@ -52,7 +52,6 @@ const ArchivedRow = observer(({ flag }: { flag: Archived }) => {
     setError(null);
     const target = await db.flag_deletes.ref(`flag:${name}`).load();
     if (!target) return setError("Only admins can delete flags permanently.");
-    await target.patch({ updated_by: email }); // so the audit log names who deleted it
     const r = await target.delete();
     if (!r.ok) setError(friendlyError(r.error.message));
   }

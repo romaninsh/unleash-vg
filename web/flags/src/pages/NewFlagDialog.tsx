@@ -37,7 +37,6 @@ export function NewFlagDialog({ onClose }: { onClose: () => void }) {
       ...(tags.trim() && { tags }),
       edit_scope: "all",
       created_by: email,
-      updated_by: email,
     });
     setBusy(false);
     if (!r.ok) return setError(explain(r.error.message, name));
