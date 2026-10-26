@@ -18,7 +18,7 @@ body:
         hint: { label: Secret starts with, width: 300 }
         source: { label: Source, width: 90 }
         created_at: { label: Created, width: 130 }
-        last_used_text: { label: Last used, render: relative }
+        last_used_at: { label: Last used, render: relative }
       toolbar:
         - label: Create token
           icon: Key

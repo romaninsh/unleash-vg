@@ -14,7 +14,7 @@ body:
         environment: { label: Environment, width: 120 }
         sdk_version: { label: SDK version, width: 280 }
         instances: { label: Instances, width: 90 }
-        last_seen_at: { label: Last seen, render: relative }
+        last_seen_at: { label: Last seen, render: relative, freshness: true }
   - kind: label
     params: { text: "Unknown flag names - apps ask for these but they don't exist (often a typo)", style: heading, icon: TriangleAlert }
   - kind: grid
@@ -25,4 +25,4 @@ body:
         environment: { label: Environment, width: 120 }
         app_name: { label: App, width: 180 }
         count: { label: Evaluations, width: 110 }
-        last_seen_text: { label: Last seen, render: relative }
+        last_seen_at: { label: Last seen, render: relative }

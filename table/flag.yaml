@@ -17,10 +17,8 @@ columns:
   last_seen: { label: Last seen, type: timestamp, flags: [calculated] }
   last_seen_by_env: { label: Last seen per environment, type: string, flags: [calculated] }
   archived_at: { label: Archived, type: timestamp, flags: [calculated], time_precision: minutes }
-  archived_text: { label: Archived, type: string, expr: 'surreal::expr("IF archived_at = NONE THEN '''' ELSE <string> archived_at END")' }
   archived_by: { label: Archived by, type: string, flags: [calculated] }
   created_at: { label: Created, type: timestamp, flags: [calculated], time_precision: minutes }
-  created_text: { label: Created, type: string, expr: 'surreal::expr("<string> created_at")' }
   created_by: { label: Created by, type: string, flags: [calculated] }
 references:
   environments: { table: flag_env, kind: has_many, foreign_key: flag }

@@ -5,7 +5,6 @@ title: Audit log
 columns:
   id: { type: string, flags: [id, hidden] }
   created_at: { label: Time, type: timestamp, time_precision: minutes }
-  created_text: { label: Time, type: string, expr: 'surreal::expr("<string> created_at")' }
   created_by: { label: User, type: string, flags: [searchable] }
   type: { label: Event, type: string }
   flag: { type: string, flags: [searchable] }

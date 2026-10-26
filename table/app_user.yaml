@@ -11,6 +11,5 @@ columns:
   must_change_password: { label: Must change password, type: bool }
   password_hash: { type: string, flags: [hidden] }
   last_login_at: { label: Last login, type: timestamp, flags: [calculated], time_precision: minutes }
-  last_login_text: { label: Last login, type: string, expr: 'surreal::expr("IF last_login_at = NONE THEN '''' ELSE <string> last_login_at END")' }
-  password_changed_text: { label: Password changed, type: string, expr: 'surreal::expr("IF password_changed_at = NONE THEN '''' ELSE <string> password_changed_at END")' }
+  password_changed_at: { label: Password changed, type: timestamp, flags: [calculated], time_precision: minutes }
   created_at: { label: Created, type: timestamp, flags: [calculated], time_precision: minutes }

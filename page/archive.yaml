@@ -13,7 +13,7 @@ body:
       default_sort: { column: archived_at, direction: desc }
       columns:
         name: { label: Flag, width: 240 }
-        archived_text: { label: Archived, render: relative, width: 120 }
+        archived_at: { label: Archived, render: relative, width: 120 }
         archived_by: { label: Archived by, width: 200 }
         description: { label: Description }
       row_actions:

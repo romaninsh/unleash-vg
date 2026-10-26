@@ -13,8 +13,8 @@ body:
         email: { label: Email, width: 230 }
         role: { label: Role, width: 90, color: { red: [admin], blue: [editor], muted: [viewer] } }
         editable_environments: { label: Editable environments, width: 230 }
-        last_login_text: { label: Last login, render: relative, width: 110 }
-        password_changed_text: { label: Password changed, render: relative, width: 130 }
+        last_login_at: { label: Last login, render: relative, freshness: true, width: 110 }
+        password_changed_at: { label: Password changed, render: relative, width: 130 }
         active: { label: Active, width: 70 }
       toolbar:
         - label: Add user

@@ -12,7 +12,7 @@ body:
       default_sort: { column: created_at, direction: desc }
       filter: [created_by, flag, environment, brand, type, ">=created_at", "<=created_at", "~summary"]
       columns:
-        created_text: { label: Time, render: relative, width: 100 }
+        created_at: { label: Time, render: relative, width: 100 }
         created_by: { label: User, width: 180 }
         flag: { label: Flag, width: 190 }
         summary: { label: Change, width: 420 }

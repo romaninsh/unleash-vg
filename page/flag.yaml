@@ -39,7 +39,7 @@ body:
             params:
               fields: [description, tags, stale, archived]
           - kind: label
-            params: { text: "Created ${date_relative(record.created_text)} by ${record.created_by}" }
+            params: { text: "Created ${date_relative(record.created_at)} by ${record.created_by}" }
   - kind: label
     params: { text: "History", style: heading, icon: ClipboardList }
   - kind: grid
@@ -47,7 +47,7 @@ body:
     height: 300
     params:
       columns:
-        created_text: { label: Time, render: relative, width: 110 }
+        created_at: { label: Time, render: relative, width: 110 }
         created_by: { label: User, width: 190 }
         environment: { label: Environment, width: 110 }
         summary: { label: Change }

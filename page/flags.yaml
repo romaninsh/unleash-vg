@@ -60,7 +60,7 @@ body:
         development: { label: development, width: 150, color: { muted: [Disabled], success: ["ON*"], danger: ["OFF*"], blue: ["*%*"], yellow: ["Only*"] } }
         uat: { label: uat, width: 150, color: { muted: [Disabled], success: ["ON*"], danger: ["OFF*"], blue: ["*%*"], yellow: ["Only*"] } }
         production: { label: production, width: 150, color: { muted: [Disabled], success: ["ON*"], danger: ["OFF*"], blue: ["*%*"], yellow: ["Only*"] } }
-        last_seen_text: { label: Last seen, render: relative, width: 110, tooltip: "Most recent SDK evaluation in any environment" }
+        last_seen: { label: Last seen, render: relative, freshness: true, width: 110, tooltip: "Most recent SDK evaluation in any environment" }
         tags: { label: Tags, width: 150 }
         created_at: { label: Created, width: 100 }
         description: { label: Description, width: 320 }

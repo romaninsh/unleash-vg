@@ -13,9 +13,7 @@ columns:
   uat: { type: string, flags: [calculated] }
   production: { type: string, flags: [calculated] }
   override_count: { label: Brand overrides, type: int, flags: [calculated] }
-  last_seen: { label: Last seen, type: timestamp, flags: [hidden, calculated] }
-  # text form for `render: relative` (a SurrealDB datetime value isn't rendered as relative time)
-  last_seen_text: { label: Last seen, type: string, expr: 'surreal::expr("IF last_seen = NONE THEN '''' ELSE <string> last_seen END")' }
+  last_seen: { label: Last seen, type: timestamp, flags: [calculated] }
   created_at: { label: Created, type: timestamp, flags: [calculated], date_precision: day }
 surreal:
   table: flag
