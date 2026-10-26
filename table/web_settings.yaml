@@ -11,6 +11,9 @@ columns:
   metrics_retention_days: { type: int }
   admin_scope: { type: string }
   usage_recording_since: { type: timestamp, flags: [calculated] }
-  updated_by: { type: string }
 surreal:
   table: settings
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_settings.rhai

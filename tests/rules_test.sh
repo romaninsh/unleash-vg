@@ -110,10 +110,8 @@ check "context field names are identifiers and differ" yes \
 check "web origins must be http(s) addresses" yes \
   "$(errs "frontend_cors_origins" "$(Q "UPDATE settings:main SET frontend_cors_origins = 'not a url';")")"
 check "web origins are tidied: one per line, no trailing slash, no repeats" '"https://a.example\n*"' \
-  "$(Q "UPDATE settings:main SET frontend_cors_origins = 'https://a.example/, https://a.example  *', updated_by = 'ann@example.com';
+  "$(Q "UPDATE settings:main SET frontend_cors_origins = 'https://a.example/, https://a.example  *';
         RETURN settings:main.frontend_cors_origins;")"
-check "settings changes are logged under the person" '"ann@example.com"' \
-  "$(Q "RETURN (SELECT VALUE created_by FROM audit_event WHERE type = 'settings-updated' ORDER BY created_at DESC LIMIT 1)[0];")"
 check "tags in use are counted on live flags only" '[1,1,0]' \
   "$(Q "CREATE flag:tg1 SET name = 'tg1', tags = 'zz-one,zz-two';
         LET \$a = known_tag:\`zz-one\`.flags; LET \$b = known_tag:\`zz-two\`.flags;

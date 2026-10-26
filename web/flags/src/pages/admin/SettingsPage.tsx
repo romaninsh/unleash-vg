@@ -1,12 +1,11 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { observer, useRecord } from "@vantage-ui/client/react";
-import { useDb, usePermissions } from "../../auth";
+import { useDb } from "../../auth";
 import { friendlyError } from "../../format";
 
 /** Settings (spec 05 screen 10, admins). Changing a context field name asks for confirmation. */
 export const SettingsPage = observer(() => {
   const db = useDb();
-  const { email } = usePermissions();
   const ref = useMemo(() => db.settings_admin.ref("settings:main"), [db]);
   const { value: s, error: loadError } = useRecord(ref);
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -25,7 +24,7 @@ export const SettingsPage = observer(() => {
     if (contextChanged && !confirm("Changing a context field name changes what every SDK receives. Continue?")) return;
     setError(null);
     // Only the fields this admin edited: a concurrent change by another admin to the others stays.
-    const fields: Record<string, string | number> = { updated_by: email };
+    const fields: Record<string, string | number> = {};
     for (const [k, v] of Object.entries(draft)) fields[k] = k.endsWith("_days") ? Number(v) : v.trim();
     const r = await s.patch(fields);
     if (!r.ok) return setError(friendlyError(r.error.message));

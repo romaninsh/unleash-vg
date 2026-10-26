@@ -144,7 +144,7 @@ entities:
   - name: settings_admin
     observe: web_settings
     params:
-      columns: [brand_context_field, customer_context_field, frontend_cors_origins, unused_flag_days, metrics_retention_days, admin_scope, usage_recording_since, updated_by]
+      columns: [brand_context_field, customer_context_field, frontend_cors_origins, unused_flag_days, metrics_retention_days, admin_scope, usage_recording_since]
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: environment_edits
     observe: web_env_edit

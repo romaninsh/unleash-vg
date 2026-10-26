@@ -85,7 +85,6 @@ DEFINE FIELD OVERWRITE metrics_retention_days ON settings TYPE int DEFAULT 30 AS
 DEFINE FIELD OVERWRITE unused_flag_days       ON settings TYPE int DEFAULT 30 ASSERT $value >= 1 AND $value <= 3650;
 -- When usage recording started: "not seen in N days" is only reliable N days after this.
 DEFINE FIELD OVERWRITE usage_recording_since  ON settings TYPE datetime DEFAULT time::now() ASSERT $before = NONE OR $before = $value;
-DEFINE FIELD OVERWRITE updated_by             ON settings TYPE option<string>;
 DEFINE FIELD OVERWRITE admin_scope            ON settings TYPE string VALUE 'all';
 
 -- The key is what apps send as the brand; it can't change (spec 02).

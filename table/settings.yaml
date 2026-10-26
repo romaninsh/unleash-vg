@@ -9,3 +9,7 @@ columns:
   frontend_cors_origins: { label: Frontend CORS origins, type: string }
   unused_flag_days: { label: Unused-flag threshold (days), type: int, flags: [mandatory] }
   metrics_retention_days: { label: Metrics retention (days), type: int, flags: [mandatory] }
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_settings.rhai

@@ -205,19 +205,13 @@ DEFINE EVENT OVERWRITE brand_override_changes ON TABLE brand_override THEN {
 
 -- ---------------------------------------------------------------- settings
 
+-- Settings changes are audited by Vantage (table/settings.yaml log_changes:); this keeps the rules.
 DEFINE EVENT OVERWRITE settings_changes ON TABLE settings THEN {
-    LET $by = $after.updated_by ?? 'admin';
     IF $event = 'DELETE' { THROW 'Settings cannot be deleted'; };
-    IF $after.updated_by != NONE { UPDATE $after.id SET updated_by = NONE; };
-    IF $event = 'UPDATE' AND $before.{brand_context_field, customer_context_field, frontend_cors_origins, metrics_retention_days, unused_flag_days}
-                          != $after.{brand_context_field, customer_context_field, frontend_cors_origins, metrics_retention_days, unused_flag_days} {
-        fn::audit($by, 'settings-updated', NONE, NONE, NONE, 'Settings changed',
-            $before.{brand_context_field, customer_context_field, frontend_cors_origins, metrics_retention_days, unused_flag_days},
-            $after.{brand_context_field, customer_context_field, frontend_cors_origins, metrics_retention_days, unused_flag_days});
-        -- the context field names change the compiled output of every flag
-        IF $before.brand_context_field != $after.brand_context_field OR $before.customer_context_field != $after.customer_context_field {
-            fn::bump_revision(NONE);
-        };
+    -- the context field names change the compiled output of every flag
+    IF $event = 'UPDATE' AND ($before.brand_context_field != $after.brand_context_field
+                              OR $before.customer_context_field != $after.customer_context_field) {
+        fn::bump_revision(NONE);
     };
 };
 
