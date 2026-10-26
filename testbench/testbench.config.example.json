@@ -1,0 +1,54 @@
+{
+  "port": 4300,
+  "targets": [
+    {
+      "name": "unleash-vg",
+      "baseUrl": "http://127.0.0.1:4380",
+      "brands": {
+        "type": "surreal",
+        "url": "http://127.0.0.1:<mapped-port — see `docker ps`>",
+        "ns": "flags",
+        "db": "flags",
+        "user": "root",
+        "pass": "root"
+      },
+      "contextFields": { "brand": "brand", "customer": "userId" },
+      "tokens": {
+        "development": {
+          "backend": "default:development.testbenchbackend0000000000000000000000000000000000000000",
+          "frontend": "default:development.testbenchfrontend000000000000000000000000000000000000000"
+        },
+        "uat": {
+          "backend": "default:uat.testbenchbackend0000000000000000000000000000000000000000",
+          "frontend": "default:uat.testbenchfrontend000000000000000000000000000000000000000"
+        },
+        "production": {
+          "backend": "default:production.testbenchbackend0000000000000000000000000000000000000000",
+          "frontend": "default:production.testbenchfrontend000000000000000000000000000000000000000"
+        }
+      }
+    },
+    {
+      "name": "unleash",
+      "baseUrl": "http://localhost:4242",
+      "brands": {
+        "type": "static",
+        "brands": [
+          { "key": "bank-a", "displayName": "Northwind Air" },
+          { "key": "bank-b", "displayName": "Harbour Bank" },
+          { "key": "bank-c", "displayName": "Greenfield Stores" },
+          { "key": "bank-d", "displayName": "Contoso Air (prospect)" },
+          { "key": "bank-e", "displayName": "Parcelpoint (prospect)" },
+          { "key": "bank-f", "displayName": "Roadside Club (prospect)" }
+        ]
+      },
+      "contextFields": { "brand": "brand", "customer": "userId" },
+      "tokens": {
+        "production": {
+          "backend": "<your Unleash backend token for production>",
+          "frontend": "<your Unleash frontend token for production>"
+        }
+      }
+    }
+  ]
+}
