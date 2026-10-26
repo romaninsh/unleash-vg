@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# One per flag x environment; id = flag_env:`<flag>:<environment>`.
+datasource: flags
+title: Flag environments
+columns:
+  id: { label: Flag · environment, type: string, flags: [id, title] }
+  flag: { type: string, flags: [calculated], references: flag }
+  environment: { type: string, flags: [calculated], references: environment }
+  enabled: { label: Switch, type: bool }
+  default_rollout: { label: Rollout %, type: int }
+  default_allowlist: { label: Customers always ON, type: string }
+  revision: { type: int, flags: [calculated] }
+  default_label: { label: Default rule, type: string, expr: 'expr("fn::rule_label(default_rollout, default_allowlist)")' }
+  heading: { type: string, expr: 'expr("fn::env_heading(id)")' }
+  detail: { type: string, expr: 'expr("fn::env_detail(id)")' }
+  seen: { type: string, expr: 'expr("fn::env_seen(id)")' }
+references:
+  overrides: { table: brand_override, kind: has_many, foreign_key: flag_env }

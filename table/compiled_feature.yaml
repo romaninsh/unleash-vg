@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# What SDKs receive per flag x environment (fn::compile, spec 03/04). Archived flags excluded.
+datasource: flags
+title: SDK output
+columns:
+  id: { type: string, flags: [id, hidden] }
+  flag: { type: string, flags: [hidden], references: { table: flag, kind: has_one, name: flag } }
+  flag.name: { label: Flag, type: string }
+  environment: { type: string, flags: [hidden] }
+  env_key: { label: Environment, type: string }
+  enabled: { label: Switch, type: bool }
+  served_enabled: { label: Served as enabled, type: bool, expr: 'expr("fn::compile(id).enabled")' }
+  feature: { label: JSON sent to apps, type: string, expr: 'expr("encoding::json::encode(fn::compile(id))")' }
+surreal:
+  table: flag_env
+  modify: |
+    self.with_condition(expr("flag.archived != true"))

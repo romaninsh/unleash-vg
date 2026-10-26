@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web admin: settings (spec 05 screen 10), one record settings:main. Scoped to admins.
+datasource: flags
+title: Settings (web admin)
+columns:
+  id: { type: string, flags: [id] }
+  brand_context_field: { type: string, flags: [title] }
+  customer_context_field: { type: string }
+  frontend_cors_origins: { type: string }
+  unused_flag_days: { type: int }
+  metrics_retention_days: { type: int }
+  admin_scope: { type: string }
+  usage_since_text: { type: string, expr: 'expr("<string> usage_recording_since")' }
+  updated_by: { type: string }
+surreal:
+  table: settings

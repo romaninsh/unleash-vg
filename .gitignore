@@ -17,6 +17,9 @@ data/
 .DS_Store
 # --- end managed by Vantage
 
+# Skill copies Vantage installs and refreshes in every project it opens.
+.agents/
+
 # Per-profile env files (.env.prod, …) hold credentials too.
 .env.*
 

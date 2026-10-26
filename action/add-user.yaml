@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./action-schema-1.json
+kind: form
+dialog:
+  title: Add user
+  description: "Viewers see everything. Editors create and edit flags, and change switches and rules in the environments you tick. Admins can do everything. A temporary password is shown on the next screen."
+  confirm_label: Add user
+form:
+  fields:
+    - { name: name, type: string, label: Name }
+    - { name: email, type: string, label: Email (login name) }
+    - { name: role, type: string, label: Role, widget: checklist, choices: [viewer, editor, admin] }
+    - { name: editable_environments, type: string, label: "Editable environments (editors)", widget: checklist, choices: [development, uat, production], required: false }

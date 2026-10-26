@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Brands (spec 05 screen 7). The key is what apps send in the brand context field.
+title: Brands
+body:
+  - kind: label
+    params: { text: "Inactive brands can't get new overrides; existing ones still apply. A brand with overrides can't be deleted - deactivate it instead. Rename or deactivate in Details.", style: muted }
+  - kind: binder
+    name: brands
+    observe: brand
+    params:
+      allow_add: false
+      default_sort: { column: key, direction: asc }
+      columns:
+        key: { label: Key, width: 140 }
+        display_name: { label: Name, width: 220 }
+        active: { label: Active, width: 80 }
+        created_at: { label: Created, width: 120 }
+      toolbar:
+        - label: Add brand
+          icon: Plus
+          action: |
+            let f = actions.add_brand();
+            let k = f.key;
+            k.trim();
+            if table("brand").where("key", k).count() > 0 { throw `A brand with key ${k} already exists`; }
+            try {
+              table("brand").insert(#{ id: k, key: k, display_name: f.display_name, active: true });
+            } catch (e) {
+              if `${e}`.contains("field `key`") { throw "Key: lowercase letters, digits and dashes only, starting with a letter or digit"; }
+              throw e;
+            }

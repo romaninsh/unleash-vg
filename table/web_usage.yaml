@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: last seen and yes/no counts of one flag in each environment (the flag page's Usage card).
+# Reads flag_env directly (index on flag_name), so only the asked rows are computed.
+# READ-ONLY BY NAMING, like web_env: no column shares a name with a stored flag_env field
+# except flag_name/env_key, which the database computes.
+datasource: flags
+title: Flag usage (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  flag_name: { type: string, flags: [title], expr: 'expr("flag_name")' }
+  env_key: { type: string, expr: 'expr("env_key")' }
+  seen_text: { type: string, expr: 'expr("fn::env_seen(id)")' }
+  usage_day: { type: string, expr: 'expr("fn::usage(flag_name, env_key, 24h)")' }
+  usage_week: { type: string, expr: 'expr("fn::usage(flag_name, env_key, 7d)")' }
+surreal:
+  table: flag_env

@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# The compiled Unleash configuration per flag x environment (spec 03), as /api/client/features will serve it.
+title: What apps receive
+body:
+  - kind: label
+    params: { text: "Exactly what Unleash SDKs will get from /api/client/features, per environment. Select a row to see the full JSON.", style: muted }
+  - kind: select
+    name: env
+    appearance: chips
+    params: { options: [development, uat, production], default: production }
+  - kind: grid
+    name: features
+    observe: { script: 'scenery("compiled_feature").where("env_key", env.value)' }
+    params:
+      search: true
+      columns:
+        flag.name: { label: Flag, width: 240 }
+        enabled: { label: Switch, width: 80 }
+        served_enabled: { label: Served as enabled, width: 140 }
+        feature: { label: JSON }
+      drawer:
+        height: 260
+        fields: [feature]

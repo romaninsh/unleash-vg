@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Connected apps (spec 05 screen 6), from SDK register and metrics calls.
+title: Connected apps
+body:
+  - kind: grid
+    observe: client_app
+    height: 380
+    params:
+      search: true
+      refresh_interval: 30
+      default_sort: { column: app_name, direction: asc }
+      columns:
+        app_name: { label: App, width: 200 }
+        environment: { label: Environment, width: 120 }
+        sdk_version: { label: SDK version, width: 280 }
+        instances: { label: Instances, width: 90 }
+        last_seen_at: { label: Last seen, render: relative }
+  - kind: label
+    params: { text: "Unknown flag names - apps ask for these but they don't exist (often a typo)", style: heading, icon: TriangleAlert }
+  - kind: grid
+    observe: unknown_flag
+    params:
+      columns:
+        name: { label: Flag name, width: 220, color: { warning: ["*"] } }
+        environment: { label: Environment, width: 120 }
+        app_name: { label: App, width: 180 }
+        count: { label: Evaluations, width: 110 }
+        last_seen_text: { label: Last seen, render: relative }

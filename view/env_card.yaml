@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=./view-schema-1.json
+# One environment of one flag (spec 05 screen 3): switch + default rule, then brand overrides.
+# All three tiles read live tables, so changes from anywhere show without refreshing.
+args:
+  flag: { type: string, required: true }
+  env: { type: string, required: true }
+body:
+  - kind: list
+    observe: { script: 'scenery("flag_env").where("id", args.flag + "@" + args.env)' }
+    height: 56
+    params:
+      text: '${ heading }'
+      sub: '${ detail }'
+      label: '${ if seen == "never" { "never seen" } else { "last seen " + date_relative(seen) } }'
+  - kind: label
+    params:
+      style: muted
+      text: "Switch off = the flag is off for everyone here. Default rule (all brands without an override): Rollout 0 = OFF, 100 = ON, 1-99 = that share of customers. Customers always ON: customer IDs separated by commas or spaces; they get the flag even at rollout 0."
+  - kind: form
+    observe: flag_env_edit
+    record: "flag_env:${args.flag}@${args.env}"
+    params:
+      fields: [enabled, default_rollout, default_allowlist]
+  - kind: label
+    params:
+      style: muted
+      text: "Brand overrides replace the default rule for one brand. Add one by picking the brand; leave Rollout empty to start from a copy of the default rule."
+  - kind: binder
+    name: overrides
+    observe: { script: 'scenery("brand_override").where("scope", args.flag + "@" + args.env)' }
+    height: 260
+    params:
+      form: brand_override
+      columns:
+        brand.display_name: { label: Brand, width: 160 }
+        rule_label: { label: Rule, width: 170, color: { success: [ON], muted: [OFF], blue: ["*%*"], yellow: ["Only*"] } }
+        allowlist: { label: Customers }

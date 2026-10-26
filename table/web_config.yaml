@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: the settings every signed-in person needs (the "not seen in N days" filter and its
+# reliability note). Read-only (a query table); admins edit them through web_settings.
+datasource: flags
+title: Config (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  unused_flag_days: { type: int, flags: [title] }
+  usage_since_text: { type: string }
+  brand_context_field: { type: string }
+  customer_context_field: { type: string }
+surreal:
+  rhai: |
+    select().from("settings").field("id").field("unused_flag_days")
+        .field("brand_context_field").field("customer_context_field")
+        .expression(expr("<string> usage_recording_since").alias("usage_since_text"))
+        .where(ident("unused_flag_days") > 0)

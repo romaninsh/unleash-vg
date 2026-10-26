@@ -1,0 +1,51 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Users (spec 05 screen 9, spec 07). Edit role, environments and active in Details.
+title: Users
+body:
+  - kind: binder
+    name: users
+    observe: app_user
+    params:
+      allow_add: false
+      default_sort: { column: name, direction: asc }
+      columns:
+        name: { label: Name, width: 170 }
+        email: { label: Email, width: 230 }
+        role: { label: Role, width: 90, color: { red: [admin], blue: [editor], muted: [viewer] } }
+        editable_environments: { label: Editable environments, width: 230 }
+        last_login_text: { label: Last login, render: relative, width: 110 }
+        password_changed_text: { label: Password changed, render: relative, width: 130 }
+        active: { label: Active, width: 70 }
+      toolbar:
+        - label: Add user
+          icon: UserPlus
+          action: |
+            let f = actions.add_user();
+            if f.role.contains(",") { throw "Pick one role"; }
+            let envs = if f.editable_environments == () { "" } else { f.editable_environments };
+            let pwd = generate_password(16);
+            table("app_user").record().set(#{
+              name: f.name, email: f.email, role: f.role, editable_environments: envs,
+              password_hash: hash_password(pwd), must_change_password: true
+            }).save();
+            actions.show_password(#{ email: f.email, password: pwd });
+      row_actions:
+        - label: Reset password
+          icon: Key
+          action: |
+            let pwd = generate_password(16);
+            row.set(#{ password_hash: hash_password(pwd), must_change_password: true });
+            row.save();
+            actions.show_password(#{ email: row.email, password: pwd });
+        - label: Deactivate
+          icon: UserX
+          when: 'row.active'
+          action: |
+            row.active = false;
+            row.save();
+        - label: Activate
+          icon: UserCheck
+          when: '!row.active'
+          action: |
+            row.active = true;
+            row.save();

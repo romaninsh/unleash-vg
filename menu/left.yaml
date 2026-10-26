@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=./menu-schema-1.json
+title: Flag Service
+items:
+  - { page: flags, label: Flags, icon: Flag }
+  - { page: archive, label: Archive, icon: Archive }
+  - { page: audit_log, label: Audit log, icon: ClipboardList }
+  - { page: connected_apps, label: Connected apps, icon: Activity }
+  - { page: sdk_output, label: What apps receive, icon: Code }
+  - divider: true
+  - section: Admin
+    icon: Shield
+    children:
+      - { page: brands, label: Brands, icon: Building2 }
+      - { page: api_tokens, label: API tokens, icon: Key }
+      - { page: users, label: Users, icon: Users }
+      - { page: settings, label: Settings, icon: Settings }

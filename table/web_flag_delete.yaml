@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: permanent delete of archived flags. The web API scopes it to admins (principal `admin`);
+# the database refuses to delete a flag that isn't archived.
+datasource: flags
+title: Flags (web, delete)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title, calculated] }
+  updated_by: { type: string }
+  edit_scope: { type: string, flags: [calculated] }
+surreal:
+  table: flag

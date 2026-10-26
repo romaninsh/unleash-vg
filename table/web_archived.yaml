@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: archived flags (spec 05 screen 4), read-only (a query table, so the API refuses
+# writes). Revive goes through web_flag_edit, permanent delete through web_flag_delete (admins).
+datasource: flags
+title: Archived flags (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  description: { type: string }
+  archived_text: { type: string }
+  archived_by: { type: string }
+  # for the archived flag's own (read-only) page
+  tags: { type: string }
+  stale: { type: bool }
+  development: { type: string }
+  uat: { type: string }
+  production: { type: string }
+  created_text: { type: string }
+  created_by: { type: string }
+surreal:
+  rhai: |
+    select()
+        .from("flag")
+        .field("id").field("name").field("description").field("archived_by")
+        .field("tags").field("stale").field("development").field("uat").field("production").field("created_by")
+        .expression(expr("<string> created_at").alias("created_text"))
+        .expression(expr("IF archived_at = NONE THEN '' ELSE <string> archived_at END").alias("archived_text"))
+        .where(ident("archived") == true)

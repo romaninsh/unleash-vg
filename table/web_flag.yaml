@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: the flags list, read-only for everyone (edits go through web_flag_edit).
+# A query table, so the API refuses writes (expr: columns on a plain table do NOT - see
+# FEEDBACK.md). Only stored fields: filters and sorting wrap this query, and all 5000 flags
+# read in a few ms.
+datasource: flags
+title: Flags (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  name_sort: { type: string }
+  description: { type: string }
+  tags: { type: string }
+  stale: { type: bool }
+  development: { type: string }
+  uat: { type: string }
+  production: { type: string }
+  override_count: { type: int }
+  last_seen_text: { type: string }
+  created_text: { type: string }
+  created_by: { type: string }
+  # filters: name + description lower-cased, tags as ",a,b,", last seen or created (ISO text)
+  search_text: { type: string }
+  tags_key: { type: string }
+  last_activity: { type: string }
+  # tooltips: per-environment last seen, and each environment's brand overrides
+  last_seen_by_env: { type: string }
+  development_brands: { type: string }
+  uat_brands: { type: string }
+  production_brands: { type: string }
+surreal:
+  rhai: |
+    select()
+        .from("flag")
+        .field("id").field("name").field("name_sort").field("description").field("tags")
+        .field("stale").field("development").field("uat").field("production")
+        .field("override_count").field("created_by")
+        .field("search_text").field("tags_key").field("last_activity").field("last_seen_by_env")
+        .field("development_brands").field("uat_brands").field("production_brands")
+        .expression(expr("IF last_seen = NONE THEN '' ELSE <string> last_seen END").alias("last_seen_text"))
+        .expression(expr("<string> created_at").alias("created_text"))
+        .where(ident("archived") != true)

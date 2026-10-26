@@ -1,0 +1,36 @@
+# Local stack for the Flag Service, started from Vantage's Services panel:
+#   surrealdb     the database (admin app, web app and flag service share it)
+#   flag-service  the Unleash-compatible SDK API (service/); point SDKs at http://127.0.0.1:4380/api
+services:
+  surrealdb:
+    image: surrealdb/surrealdb:latest
+    command: start --user root --pass root --bind 0.0.0.0:8000 rocksdb:/home/nonroot/flags.db
+    ports:
+      - "127.0.0.1::8000"
+    volumes:
+      - surrealdb-data:/home/nonroot
+    healthcheck:
+      test: ["CMD", "/surreal", "isready"]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+
+  flag-service:
+    build: ./service
+    environment:
+      SURREAL_URL: ws://surrealdb:8000
+      SURREAL_NS: flags
+      SURREAL_DB: flags
+      SURREAL_USER: root
+      SURREAL_PASS: root
+      RUST_LOG: info
+      PORT: "4380"
+    ports:
+      - "127.0.0.1:4380:4380"
+    depends_on:
+      surrealdb:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  surrealdb-data:

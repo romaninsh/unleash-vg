@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# 56 random lowercase hex characters, for new token secrets (spec 04). One row, fresh on every read.
+datasource: flags
+title: Random secret
+columns:
+  id: { type: string, flags: [id, hidden] }
+  hex: { type: string }
+surreal:
+  rhai: |
+    select()
+        .expression(ident("id"))
+        .expression(expr("string::slice(crypto::sha256(rand::string(64)), 0, 56)").alias("hex"))
+        .from(expr("settings:main"))

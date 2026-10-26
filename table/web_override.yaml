@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: brand overrides, read-only for everyone (a query table, so the API refuses writes).
+# Ids stay brand_override:..., which the page hands to override_edits. Keep the .where():
+# without one the API treats this query table as writable (FEEDBACK.md).
+datasource: flags
+title: Brand overrides (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  scope: { type: string }
+  env_key: { type: string }
+  brand_key: { type: string }
+  brand_name: { type: string, flags: [title] }
+  rollout: { type: int }
+  allowlist: { type: string }
+  rule_label: { type: string }
+  brand_active: { type: bool }
+surreal:
+  rhai: |
+    select()
+        .from("brand_override")
+        .field("id").field("scope").field("env_key").field("rollout").field("allowlist")
+        .expression(expr("brand.key").alias("brand_key"))
+        .expression(expr("brand.display_name").alias("brand_name"))
+        .expression(expr("brand.active").alias("brand_active"))
+        .expression(expr("fn::rule_label(rollout, allowlist)").alias("rule_label"))
+        .where(ident("scope") != expr("NONE"))

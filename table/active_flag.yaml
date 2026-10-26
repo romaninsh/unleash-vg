@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# The flags list (spec 05 screen 2): every flag that isn't archived. Writable and live.
+datasource: flags
+title: Flags
+columns:
+  id: { type: string, flags: [id, hidden] }
+  name: { type: string, flags: [title, searchable, calculated] }
+  name_sort: { type: string, flags: [hidden, calculated] }   # natural order: test-2 before test-10
+  description: { type: string, flags: [searchable] }
+  tags: { type: string }
+  stale: { type: bool }
+  development: { type: string, flags: [calculated] }
+  uat: { type: string, flags: [calculated] }
+  production: { type: string, flags: [calculated] }
+  override_count: { label: Brand overrides, type: int, flags: [calculated] }
+  last_seen: { label: Last seen, type: timestamp, flags: [hidden, calculated] }
+  # text form for `render: relative` (a SurrealDB datetime value isn't rendered as relative time)
+  last_seen_text: { label: Last seen, type: string, expr: 'expr("IF last_seen = NONE THEN '''' ELSE <string> last_seen END")' }
+  created_at: { label: Created, type: timestamp, flags: [calculated], date_precision: day }
+surreal:
+  table: flag
+  modify: |
+    self.with_condition(ident("archived") != true)

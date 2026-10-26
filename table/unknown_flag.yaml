@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Flag names apps evaluate that don't exist here - usually typos. Written by the SDK service.
+datasource: flags
+title: Unknown flag names
+columns:
+  id: { type: string, flags: [id, hidden] }
+  name: { label: Flag name, type: string, flags: [title, searchable] }
+  environment: { type: string }
+  app_name: { label: App, type: string }
+  count: { label: Evaluations, type: int }
+  last_seen_at: { label: Last seen, type: timestamp }
+  last_seen_text: { label: Last seen, type: string, expr: 'expr("<string> last_seen_at")' }

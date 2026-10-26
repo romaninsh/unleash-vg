@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=./action-schema-1.json
+kind: form
+dialog:
+  title: New flag
+  description: "The name uses letters, digits, dot, dash and underscore, can't be changed later, and must differ from every flag (archived ones too). The new flag starts switched off in every environment."
+  confirm_label: Create
+form:
+  fields:
+    - { name: name, type: string, label: Name, placeholder: "e.g. debit-card-payments" }
+    - { name: description, type: string, label: Description, multiline: true, required: false }
+    - { name: tags, type: string, label: Tags, placeholder: "e.g. payments, team:cards", required: false }

@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=./action-schema-1.json
+kind: form
+dialog:
+  title: Add brand
+  description: "The key is the exact value apps send as the brand (lowercase letters, digits and dashes, case-sensitive). It can't be changed later; the name can."
+  confirm_label: Add brand
+form:
+  fields:
+    - { name: key, type: string, label: Key, placeholder: "e.g. bank-g" }
+    - { name: display_name, type: string, label: Name, placeholder: "e.g. Bank G" }

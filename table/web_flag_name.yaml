@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: every flag name the audit log mentions - live, archived and deleted flags - for the
+# audit log's flag picker. Read-only (a query table, grouped; one row per name).
+datasource: flags
+title: Flag names in the audit log (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  events: { type: int }
+surreal:
+  rhai: |
+    select()
+        .from(
+            select()
+                .from("audit_event")
+                .expression(expr("flag").alias("name"))
+                .expression(expr("count()").alias("events"))
+                .where(ident("flag") != expr("NONE"))
+                .group_by(ident("name"))
+                .subquery())
+        .expression(fx("type::record", [expr("'flag_name'"), ident("name")]).alias("id"))
+        .field("name").field("events")
+        .where(ident("name") != expr("NONE"))

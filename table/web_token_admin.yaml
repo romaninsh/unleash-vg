@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web admin: API tokens (spec 05 screen 8). The web API scopes it to admins (admin_scope).
+# A create sends the secret once in new_secret; the database keeps only its hash, lookup and hint.
+datasource: flags
+title: API tokens (web admin)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  type: { type: string }
+  environment: { type: string }
+  env_key: { type: string, expr: 'expr("<string> record::id(environment)")' }
+  source: { type: string }
+  hint: { type: string }
+  created_by: { type: string }
+  created_text: { type: string, expr: 'expr("<string> created_at")' }
+  last_used_text: { type: string, expr: 'expr("IF last_used_at = NONE THEN '''' ELSE <string> last_used_at END")' }
+  new_secret: { type: string }
+  admin_scope: { type: string }
+  updated_by: { type: string }
+surreal:
+  table: api_token

@@ -1,0 +1,163 @@
+# yaml-language-server: $schema=./api-schema-1.json
+# Web interface for staff (web/flags/). SIMULATED sign-in: each person's token is
+# "<email>:demo"; the sign-in form builds it from email + password. Not for production -
+# real login belongs in the separate flag service (spec 07).
+#
+# Permissions (spec 07) are enforced here by scope rules on the editable entities:
+#   envs       environments the person may change (switch, default rule, brand overrides)
+#   flag_edit  ["all"] = may create flags and edit their description, tags, stale, archive, revive
+#   admin      ["all"] = may delete archived flags permanently
+# Everyone may read every flag, rule and history entry.
+title: Flags web
+description: Feature flags for staff in the browser - list, rules per environment, brand overrides, history.
+
+entities:
+  # ---- read-only views (everyone)
+  - name: flags
+    observe: web_flag
+    params:
+      columns: [name, name_sort, description, tags, stale, development, uat, production, override_count, last_seen_text, created_text, created_by,
+                search_text, tags_key, last_activity, last_seen_by_env, development_brands, uat_brands, production_brands]
+      # search_text / tags_key / last_activity stand in for multi-column search and OR (FEEDBACK.md)
+      filter: [name, stale, tags, search_text, tags_key, override_count, last_activity]
+      default_sort: name_sort   # natural order: test-2 before test-10
+    # lazy: the page asks for the rows it shows (200 at a time), not all flags at connect.
+    # A query table has no live feed: re-read every 3 s (a few ms for 5000 flags).
+    api: { collection_limit: 10000, refresh: 3 }
+  - name: environments
+    observe: web_env
+    params:
+      # names differ from the stored fields on purpose: that keeps it read-only (table/web_env.yaml)
+      columns: [flag_name, env_key, is_on, rule_rollout, rule_allowlist, default_label, detail, seen, rule_revision]
+      filter: [flag_name, env_key]
+      default_sort: env_key
+  - name: overrides
+    observe: web_override
+    params:
+      columns: [scope, env_key, brand_key, brand_name, rollout, allowlist, rule_label, brand_active]
+      filter: [scope]
+      default_sort: brand_name
+    api: { refresh: 3 }
+  - name: brands
+    observe: web_brand
+    params:
+      columns: [key, display_name, active]
+      default_sort: display_name
+    api: { load: instant }
+  - name: history
+    observe: web_history
+    params:
+      columns: [created_at, created_text, created_by, flag, environment, brand, summary, type, pre_data, data]
+      filter: [flag, created_by, environment, brand, type, summary, created_at]
+      default_sort: -created_at
+    api: { collection_limit: 10000, refresh: 3 }   # export reads the whole filtered log; query table: re-read
+  - name: archived
+    observe: web_archived
+    params:
+      columns: [name, description, archived_text, archived_by, tags, stale, development, uat, production, created_text, created_by]
+      filter: [name]
+      default_sort: -archived_text
+    api: { refresh: 3 }
+  - name: apps
+    observe: client_app
+    params:
+      columns: [app_name, environment, sdk_version, instances, last_seen_at]
+      default_sort: app_name
+    api: { refresh: 10 }
+  - name: unknown_flags
+    observe: web_unknown_flag
+    params:
+      columns: [name, environment, app_name, count, last_seen_text]
+      default_sort: -last_seen_text
+    api: { refresh: 10 }
+  - name: tags
+    observe: web_tag
+    params:
+      columns: [name, flags]
+      default_sort: name
+    api: { refresh: 5 }
+  - name: config
+    observe: web_config
+    params:
+      columns: [unused_flag_days, usage_since_text, brand_context_field, customer_context_field]
+    api: { load: instant }
+  - name: compiled
+    observe: web_compiled
+    params:
+      # names differ from stored fields on purpose: read-only (table/web_compiled.yaml)
+      columns: [flag_name, env_key, served]
+      filter: [flag_name, env_key]
+  - name: usage
+    observe: web_usage
+    params:
+      # names differ from stored fields on purpose: read-only (table/web_usage.yaml)
+      columns: [flag_name, env_key, seen_text, usage_day, usage_week]
+      filter: [flag_name, env_key]
+      default_sort: env_key
+  - name: flag_names
+    observe: web_flag_name
+    params:
+      columns: [name, events]
+      filter: [name]
+      default_sort: name
+  - name: me
+    observe: web_me
+    params:
+      columns: [name, email, role, editable_environments]
+    api: { load: instant, scope: { email: $principal.name } }
+
+  # ---- editable (scoped to what the person may change)
+  - name: flag_edits
+    observe: web_flag_edit
+    params:
+      columns: [name, description, tags, stale, archived, created_by, updated_by, edit_scope]
+    api: { scope: { edit_scope: { in: $principal.flag_edit } } }
+  - name: flag_deletes
+    observe: web_flag_delete
+    params:
+      columns: [name, updated_by, edit_scope]
+    api: { scope: { edit_scope: { in: $principal.admin } } }
+  # ---- admin screens (admins only)
+  - name: brand_admin
+    observe: web_brand_admin
+    params:
+      columns: [key, display_name, active, admin_scope, created_text, overrides, updated_by]
+      default_sort: key
+    api: { scope: { admin_scope: { in: $principal.admin } } }
+  - name: token_admin
+    observe: web_token_admin
+    params:
+      columns: [name, type, environment, env_key, source, hint, created_by, created_text, last_used_text, new_secret, admin_scope, updated_by]
+      default_sort: name
+    api: { scope: { admin_scope: { in: $principal.admin } } }
+  - name: user_admin
+    observe: web_user_admin
+    params:
+      columns: [name, email, role, editable_environments, active, must_change_password, new_password, admin_scope, last_login_text, password_changed_text, updated_by]
+      default_sort: name
+    api: { scope: { admin_scope: { in: $principal.admin } } }
+  - name: settings_admin
+    observe: web_settings
+    params:
+      columns: [brand_context_field, customer_context_field, frontend_cors_origins, unused_flag_days, metrics_retention_days, admin_scope, usage_since_text, updated_by]
+    api: { scope: { admin_scope: { in: $principal.admin } } }
+  - name: environment_edits
+    observe: web_env_edit
+    params:
+      columns: [enabled, default_rollout, default_allowlist, env_key, updated_by, expected_revision, pending_overrides]
+    api: { scope: { env_key: { in: $principal.envs } } }
+  - name: override_edits
+    observe: web_override_edit
+    params:
+      columns: [scope, brand, rollout, allowlist, env_key, updated_by]
+      filter: [scope]
+    api: { scope: { env_key: { in: $principal.envs } } }
+
+# No project actions: Vantage refuses them for scoped principals; flags are created through
+# flag_edits (the database creates the environments and logs it).
+
+# One entry per active user, generated from the users table: run tests/sync_web_users.sh after
+# adding, changing or deactivating users.
+auth:
+  local:
+    tokens: !include ../private/web-tokens.yaml

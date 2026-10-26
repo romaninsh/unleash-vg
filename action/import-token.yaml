@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=./action-schema-1.json
+kind: form
+dialog:
+  title: Import existing Unleash token
+  description: "Paste a secret an app already uses with Unleash, so the app only needs a new URL. Only a hash is stored."
+  confirm_label: Import
+form:
+  fields:
+    - { name: name, type: string, label: "Name (e.g. ios-app prod)" }
+    - { name: type, type: string, label: "Type (Unleash 'client' tokens are backend)", widget: checklist, choices: [backend, frontend] }
+    - name: environment
+      type: string
+      label: Environment
+      widget: dropdown
+      option_label: display_name
+      options: |
+        table("environment").sort("sort_order")
+    - { name: secret, type: string, label: Secret, masked: true }

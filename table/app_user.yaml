@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=./table-schema-1.json
+datasource: flags
+title: Users
+columns:
+  id: { type: string, flags: [id, hidden] }
+  name: { type: string, flags: [title, mandatory, searchable] }
+  email: { type: string, flags: [mandatory, searchable] }
+  role: { type: string, flags: [mandatory], enum: [viewer, editor, admin] }
+  editable_environments: { label: Editable environments, type: string }
+  active: { type: bool }
+  must_change_password: { label: Must change password, type: bool }
+  password_hash: { type: string, flags: [hidden] }
+  last_login_at: { label: Last login, type: timestamp, flags: [calculated], time_precision: minutes }
+  last_login_text: { label: Last login, type: string, expr: 'expr("IF last_login_at = NONE THEN '''' ELSE <string> last_login_at END")' }
+  password_changed_text: { label: Password changed, type: string, expr: 'expr("IF password_changed_at = NONE THEN '''' ELSE <string> password_changed_at END")' }
+  created_at: { label: Created, type: timestamp, flags: [calculated], time_precision: minutes }

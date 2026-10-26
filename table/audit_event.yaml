@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Written only by the database rules (tests/events.surql); can't be changed or deleted.
+datasource: flags
+title: Audit log
+columns:
+  id: { type: string, flags: [id, hidden] }
+  created_at: { label: Time, type: timestamp, time_precision: minutes }
+  created_text: { label: Time, type: string, expr: 'expr("<string> created_at")' }
+  created_by: { label: User, type: string, flags: [searchable] }
+  type: { label: Event, type: string }
+  flag: { type: string, flags: [searchable] }
+  environment: { type: string }
+  brand: { type: string }
+  summary: { label: Change, type: string, flags: [title, searchable] }
+  pre_data: { label: Before, type: string }
+  data: { label: After, type: string }

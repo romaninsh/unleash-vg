@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: active brands, for the "add override" picker. Read-only.
+datasource: flags
+title: Brands (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  key: { type: string }
+  display_name: { type: string, flags: [title] }
+  # inactive brands are listed too (the preview may ask about them); only active ones get new overrides
+  active: { type: bool }
+surreal:
+  rhai: |
+    select().from("brand").field("id").field("key").field("display_name").field("active")
+        .where(ident("key") != expr("NONE"))

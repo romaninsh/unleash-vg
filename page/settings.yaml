@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Settings (spec 05 screen 10). Singleton row id 1.
+title: Settings
+body:
+  - kind: column
+    frame: true
+    width: 640
+    children:
+      - kind: label
+        params: { text: "Changing either context field name changes what every SDK receives. Confirm with the app teams first.", icon: TriangleAlert, style: heading }
+      - kind: label
+        params: { text: "CORS origins: comma-separated; empty or * allows any origin.", style: muted }
+      - kind: form
+        observe: settings
+        record: "settings:main"
+        params:
+          fields: [brand_context_field, customer_context_field, frontend_cors_origins, unused_flag_days, metrics_retention_days]

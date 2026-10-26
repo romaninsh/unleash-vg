@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: tags in use on live flags, with how many flags carry each (tag filter and suggestions).
+# Read-only (a query table); known_tag is kept by the flag event.
+datasource: flags
+title: Tags (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  flags: { type: int }
+surreal:
+  rhai: |
+    select().from("known_tag").field("id").field("name").field("flags")
+        .where(ident("flags") > 0)

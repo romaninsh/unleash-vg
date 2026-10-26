@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# scope = "<flag>:<environment>" text, set by the database from flag_env, for filtering.
+datasource: flags
+title: Brand overrides
+columns:
+  id: { type: string, flags: [id, hidden] }
+  flag_env: { label: Flag · environment, type: string, flags: [mandatory], references: flag_env }
+  scope: { type: string, flags: [hidden, calculated] }
+  brand: { type: string, flags: [mandatory], references: { table: brand, kind: has_one, name: brand } }
+  brand.display_name: { label: Brand, type: string }
+  rollout: { label: Rollout %, type: int }
+  allowlist: { label: Customers always ON, type: string }
+  rule_label: { label: Rule, type: string, expr: 'expr("fn::rule_label(rollout, allowlist)")' }
+  ready: { type: bool, flags: [hidden, calculated] }

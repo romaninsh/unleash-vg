@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: flag names apps ask for that don't exist (usually typos), read-only.
+datasource: flags
+title: Unknown flag names (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  environment: { type: string }
+  app_name: { type: string }
+  count: { type: int }
+  last_seen_text: { type: string }
+surreal:
+  rhai: |
+    select()
+        .from("unknown_flag")
+        .field("id").field("name").field("environment").field("app_name").field("count")
+        .expression(expr("<string> last_seen_at").alias("last_seen_text"))

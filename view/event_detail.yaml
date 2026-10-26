@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=./view-schema-1.json
+title: Change
+table: audit_event
+body:
+  - kind: label
+    text: "${record.summary}"
+    style: heading
+  - kind: label
+    text: "${record.type} · ${date_human(record.created_at)} · ${record.created_by}"
+    style: muted
+  - kind: separator
+    label: Before
+  - kind: label
+    text: "${record.pre_data}"
+    style: mono
+  - kind: separator
+    label: After
+  - kind: label
+    text: "${record.data}"
+    style: mono

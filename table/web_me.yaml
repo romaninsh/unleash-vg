@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: the signed-in person's own user row (the API scopes it on email = principal). Read-only.
+datasource: flags
+title: Me (web)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  email: { type: string }
+  role: { type: string }
+  editable_environments: { type: string }
+surreal:
+  rhai: |
+    select().from("app_user").field("id").field("name").field("email").field("role").field("editable_environments")
+        .where(ident("active") == true)

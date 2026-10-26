@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web admin: brands (spec 05 screen 7). The web API scopes it to admins (admin_scope).
+datasource: flags
+title: Brands (web admin)
+columns:
+  id: { type: string, flags: [id] }
+  key: { type: string }
+  display_name: { type: string, flags: [title] }
+  active: { type: bool }
+  admin_scope: { type: string }
+  updated_by: { type: string }
+  created_text: { type: string, expr: 'expr("<string> created_at")' }
+  overrides: { type: int, expr: 'expr("count(SELECT id FROM brand_override WHERE brand = $parent.id)")' }
+surreal:
+  table: brand

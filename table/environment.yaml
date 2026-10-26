@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=./table-schema-1.json
+datasource: flags
+title: Environments
+columns:
+  id: { type: string, flags: [id, hidden] }
+  key: { type: string }
+  display_name: { label: Name, type: string, flags: [title] }
+  sort_order: { label: Order, type: int }
+  revision_id: { label: SDK revision, type: int, flags: [calculated] }

@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Archive (spec 05 screen 4). Revive brings rules back with every switch OFF; Delete is permanent.
+title: Archive
+body:
+  - kind: label
+    params: { text: "Archived flags are invisible to apps. Revive restores the rules with every environment switched off. Delete removes the flag for good and frees its name; its audit history is kept.", style: muted }
+  - kind: binder
+    name: archived
+    observe: { script: 'scenery("flag").where("archived", true)' }
+    params:
+      allow_add: false
+      details: false
+      default_sort: { column: archived_at, direction: desc }
+      columns:
+        name: { label: Flag, width: 240 }
+        archived_text: { label: Archived, render: relative, width: 120 }
+        archived_by: { label: Archived by, width: 200 }
+        description: { label: Description }
+      row_actions:
+        - label: Revive
+          icon: RotateCcw
+          action: |
+            row.archived = false;
+            row.save();
+        - label: Copy name
+          icon: Copy
+          copy: name

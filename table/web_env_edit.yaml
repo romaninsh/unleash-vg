@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: switch + default rule edits. The web API scopes it on env_key (the person's environments).
+datasource: flags
+title: Flag environments (web, edit)
+columns:
+  id: { type: string, flags: [id] }
+  enabled: { type: bool }
+  default_rollout: { type: int }
+  default_allowlist: { type: string }
+  env_key: { type: string, flags: [calculated] }
+  updated_by: { type: string }
+  # a whole-card save: see tests/schema.surql (flag_env)
+  expected_revision: { type: int }
+  pending_overrides: { type: string }
+surreal:
+  table: flag_env

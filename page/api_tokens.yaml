@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# API tokens (spec 05 screen 8). Secrets are never stored or shown again after creation.
+title: API tokens
+body:
+  - kind: label
+    params: { text: "Delete revokes a token: apps using it get 401 from the next request.", style: muted }
+  - kind: binder
+    name: tokens
+    observe: api_token
+    params:
+      allow_add: false
+      details: false
+      default_sort: { column: environment, direction: asc }
+      columns:
+        name: { label: Name, width: 200 }
+        type: { label: Type, width: 90, color: { blue: [backend], magenta: [frontend] } }
+        environment.key: { label: Environment, width: 110 }
+        hint: { label: Secret starts with, width: 300 }
+        source: { label: Source, width: 90 }
+        created_at: { label: Created, width: 130 }
+        last_used_text: { label: Last used, render: relative }
+      toolbar:
+        - label: Create token
+          icon: Key
+          action: |
+            let f = actions.create_token();
+            if f.type.contains(",") { throw "Pick one type: backend or frontend"; }
+            let env = f.environment.sub_string(f.environment.index_of(":") + 1);
+            let secret = "default:" + env + "." + table("random_hex").first().hex;
+            table("api_token").record().set(#{
+              name: f.name, type: f.type, environment: "environment:" + env, source: "created",
+              secret_hash: hash_password(secret), lookup: secret.sub_string(0, 24),
+              hint: secret.sub_string(0, 24) + "..."
+            }).save();
+            actions.show_secret(#{ secret: secret });
+        - label: Import existing secret
+          icon: FilePlus
+          action: |
+            let f = actions.import_token();
+            if f.type.contains(",") { throw "Pick one type: backend or frontend"; }
+            let s = f.secret;
+            s.trim();
+            if s.len() < 24 { throw "That doesn't look like an Unleash token secret"; }
+            let env = f.environment.sub_string(f.environment.index_of(":") + 1);
+            table("api_token").record().set(#{
+              name: f.name, type: f.type, environment: "environment:" + env, source: "imported",
+              secret_hash: hash_password(s), lookup: s.sub_string(0, 24), hint: s.sub_string(0, 24) + "..."
+            }).save();

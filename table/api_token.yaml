@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./table-schema-1.json
+datasource: flags
+title: API tokens
+columns:
+  id: { type: string, flags: [id, hidden] }
+  name: { type: string, flags: [title, mandatory, searchable] }
+  type: { type: string, flags: [mandatory], enum: [backend, frontend] }
+  environment: { type: string, flags: [mandatory], references: { table: environment, kind: has_one, name: environment } }
+  environment.key: { label: Environment, type: string }
+  source: { type: string, enum: [created, imported] }
+  hint: { label: Secret starts with, type: string }
+  secret_hash: { type: string, flags: [hidden] }
+  lookup: { type: string, flags: [hidden] }
+  created_at: { label: Created, type: timestamp, flags: [calculated], time_precision: minutes }
+  created_by: { label: Created by, type: string, flags: [calculated] }
+  last_used_at: { label: Last used, type: timestamp, flags: [calculated], time_precision: minutes }
+  last_used_text: { label: Last used, type: string, expr: 'expr("IF last_used_at = NONE THEN '''' ELSE <string> last_used_at END")' }

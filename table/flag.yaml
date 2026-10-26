@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Record id = flag:<name>. development/uat/production, override_count and last_seen are kept
+# current by the database (fn::refresh_flag), so lists over this table update live.
+datasource: flags
+title: Flags
+columns:
+  id: { type: string, flags: [id, hidden] }
+  name: { type: string, flags: [title, searchable] }
+  description: { type: string, flags: [searchable] }
+  tags: { type: string }
+  stale: { type: bool }
+  archived: { type: bool }
+  development: { type: string, flags: [calculated] }
+  uat: { type: string, flags: [calculated] }
+  production: { type: string, flags: [calculated] }
+  override_count: { label: Brand overrides, type: int, flags: [calculated] }
+  last_seen: { label: Last seen, type: timestamp, flags: [calculated] }
+  last_seen_by_env: { label: Last seen per environment, type: string, flags: [calculated] }
+  archived_at: { label: Archived, type: timestamp, flags: [calculated], time_precision: minutes }
+  archived_text: { label: Archived, type: string, expr: 'expr("IF archived_at = NONE THEN '''' ELSE <string> archived_at END")' }
+  archived_by: { label: Archived by, type: string, flags: [calculated] }
+  created_at: { label: Created, type: timestamp, flags: [calculated], time_precision: minutes }
+  created_text: { label: Created, type: string, expr: 'expr("<string> created_at")' }
+  created_by: { label: Created by, type: string, flags: [calculated] }
+references:
+  environments: { table: flag_env, kind: has_many, foreign_key: flag }

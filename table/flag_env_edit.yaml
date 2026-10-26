@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# The editable part of flag_env (switch + default rule), for the form on a flag's environment card.
+datasource: flags
+title: Environment rule
+columns:
+  id: { type: string, flags: [id, hidden] }
+  enabled: { label: Switch, type: bool }
+  default_rollout: { label: Rollout %, type: int }
+  default_allowlist: { label: Customers always ON, type: string }
+surreal:
+  table: flag_env

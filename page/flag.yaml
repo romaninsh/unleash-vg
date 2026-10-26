@@ -1,0 +1,53 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Flag detail (spec 05 screen 3). Opened with args.name. Everything here is live.
+title: "${args.name}"
+record:
+  table: flag
+  id: "flag:${args.name}"
+body:
+  - kind: row
+    children:
+      - kind: label
+        params: { text: "${record.name}", style: heading, icon: Flag }
+      - kind: label
+        when: 'record.stale == "true"'
+        params: { text: "Stale", icon: Clock }
+      - kind: label
+        when: 'record.archived == "true"'
+        params: { text: "Archived - invisible to apps", icon: Archive }
+  - kind: row
+    children:
+      - kind: column
+        frame: true
+        children:
+          - kind: select
+            name: env
+            appearance: chips
+            params: { options: [development, uat, production], default: production }
+          - kind: view
+            src: env_card
+            args: { flag: "${args.name}", env: "${env.value}" }
+      - kind: column
+        width: 340
+        frame: true
+        children:
+          - kind: label
+            params: { text: "About this flag", style: heading }
+          - kind: form
+            observe: flag
+            record: "flag:${args.name}"
+            params:
+              fields: [description, tags, stale, archived]
+          - kind: label
+            params: { text: "Created ${date_relative(record.created_text)} by ${record.created_by}" }
+  - kind: label
+    params: { text: "History", style: heading, icon: ClipboardList }
+  - kind: grid
+    observe: { script: 'scenery("audit_event").where("flag", args.name).sort("created_at", "desc")' }
+    height: 300
+    params:
+      columns:
+        created_text: { label: Time, render: relative, width: 110 }
+        created_by: { label: User, width: 190 }
+        environment: { label: Environment, width: 110 }
+        summary: { label: Change }

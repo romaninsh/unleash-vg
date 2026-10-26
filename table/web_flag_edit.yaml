@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: create flags and edit their metadata. The web API scopes it on edit_scope (editors and
+# admins only). name can only be set on create (the database refuses renames); edit_scope is
+# always 'all' (set by the database) and is listed so a create satisfies the scope rule.
+datasource: flags
+title: Flags (web, edit)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  description: { type: string }
+  tags: { type: string }
+  stale: { type: bool }
+  archived: { type: bool }
+  created_by: { type: string }
+  updated_by: { type: string }
+  edit_scope: { type: string }
+surreal:
+  table: flag

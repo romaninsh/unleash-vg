@@ -1,0 +1,74 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Flags list (spec 05 screen 2). Double-click or "Open flag" opens the flag page.
+title: Flags
+body:
+  - kind: row
+    children:
+      - kind: label
+        params: { text: "Double-click a flag to open it", style: muted }
+      - kind: column
+        width: 150
+        children:
+          - kind: button
+            name: open_flag
+            enabled: 'flags.selected_id != ""'
+            params:
+              label: Open flag
+              icon: ExternalLink
+              size: sm
+              # selected_id is the record id (flag:`name`); the flag page takes the bare name.
+              action: |
+                let id = flags.selected_id;
+                if id != "" {
+                  let name = id.sub_string(id.index_of(":") + 1);
+                  name.replace("`", ""); name.replace("⟨", ""); name.replace("⟩", "");
+                  open("flag", #{ name: name });
+                }
+      - kind: column
+        width: 150
+        children:
+          - kind: button
+            name: new_flag
+            params:
+              label: New flag
+              icon: Plus
+              style: primary
+              size: sm
+              action: |
+                let r = actions.new_flag();
+                let res = actions.create_flag(r);
+                if res.ok {
+                  toast(`Flag ${r.name} created - switched off everywhere`, "success");
+                  open("flag", #{ name: r.name });
+                } else {
+                  toast(res.error, "error");
+                }
+  - kind: grid
+    name: flags
+    observe: active_flag
+    params:
+      search: true
+      double_click: open_flag
+      default_sort: { column: name_sort, direction: asc }
+      quick_filters:
+        chips:
+          - { label: Stale, dot: yellow, script: 'table.where("stale", true)' }
+          - { label: Has brand overrides, dot: blue, script: 'table.where("override_count", ">", 0)' }
+          - { label: Not seen in 30 days, dot: red, script: 'table.where("last_seen", "<", days_ago(30))' }
+      columns:
+        name: { label: Flag, pin: true, width: 220 }
+        development: { label: development, width: 150, color: { muted: [Disabled], success: ["ON*"], danger: ["OFF*"], blue: ["*%*"], yellow: ["Only*"] } }
+        uat: { label: uat, width: 150, color: { muted: [Disabled], success: ["ON*"], danger: ["OFF*"], blue: ["*%*"], yellow: ["Only*"] } }
+        production: { label: production, width: 150, color: { muted: [Disabled], success: ["ON*"], danger: ["OFF*"], blue: ["*%*"], yellow: ["Only*"] } }
+        last_seen_text: { label: Last seen, render: relative, width: 110, tooltip: "Most recent SDK evaluation in any environment" }
+        tags: { label: Tags, width: 150 }
+        created_at: { label: Created, width: 100 }
+        description: { label: Description, width: 320 }
+      row_actions:
+        - label: Open flag
+          icon: ExternalLink
+          navigate: flag
+          args: { name: "row.name" }
+        - label: Copy name
+          icon: Copy
+          copy: name

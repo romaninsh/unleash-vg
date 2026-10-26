@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=./action-schema-1.json
+# Saves the "New flag" dialog. The record id is the flag name (flag:<name>); the database then
+# creates its three environments. Returns #{ ok, error } so the caller can show a toast.
+kind: script
+body: |
+  let name = args.name;
+  name.trim();
+  if name == "" { return #{ ok: false, error: "A flag needs a name" }; }
+  if table("flag").where("name", name).count() > 0 {
+    return #{ ok: false, error: `A flag called ${name} already exists (it may be archived)` };
+  }
+  let row = #{ id: name, name: name };
+  // the web app passes who is creating it; the desktop app passes nothing ("admin")
+  if args.by != () && args.by != "" { row.created_by = args.by; row.updated_by = args.by; }
+  if args.description != () { row.description = args.description; }
+  if args.tags != () { row.tags = args.tags; }
+  try {
+    table("flag").insert(row);
+  } catch (e) {
+    let msg = `${e}`;
+    if msg.contains("field `name`") {
+      return #{ ok: false, error: "Name: use only letters, digits, dot, dash and underscore (max 100)" };
+    }
+    if msg.contains("field `tags`") {
+      return #{ ok: false, error: "Tags may only use a-z, 0-9, colon, underscore and dash" };
+    }
+    return #{ ok: false, error: msg };
+  }
+  #{ ok: true, error: "" }

@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./table-schema-1.json
+datasource: flags
+title: Brands
+columns:
+  id: { type: string, flags: [id, hidden] }
+  key: { type: string, flags: [searchable, calculated] }
+  display_name: { label: Name, type: string, flags: [title, mandatory, searchable] }
+  active: { type: bool }
+  created_at: { label: Created, type: timestamp, flags: [calculated], time_precision: minutes }
+  created_by: { label: Created by, type: string, flags: [calculated] }
+references:
+  overrides: { table: brand_override, kind: has_many, foreign_key: brand }

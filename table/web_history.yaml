@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: the audit log, read-only. A query table so the API refuses writes: on audit_event
+# itself the API would let any signed-in person add a made-up entry (the database only stops
+# changes and deletes). Keep the .where(): without one the API may treat it as writable
+# (FEEDBACK.md). Filtering wraps this query; ~5000 events read in ~15 ms.
+datasource: flags
+title: Audit log (web, read)
+columns:
+  id: { type: string, flags: [id] }
+  created_at: { type: timestamp }
+  created_text: { type: string }
+  created_by: { type: string }
+  type: { type: string }
+  flag: { type: string }
+  environment: { type: string }
+  brand: { type: string }
+  summary: { type: string, flags: [title] }
+  pre_data: { type: string }
+  data: { type: string }
+surreal:
+  rhai: |
+    select()
+        .from("audit_event")
+        .field("id").field("created_at").field("created_by").field("type").field("flag")
+        .field("environment").field("brand").field("summary").field("pre_data").field("data")
+        .expression(expr("<string> created_at").alias("created_text"))
+        .where(ident("created_at") != expr("NONE"))

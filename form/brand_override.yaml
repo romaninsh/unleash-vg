@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=./form-schema-1.json
+# Add / edit a brand override. The flag and environment come from the card it is added on.
+title: Brand override
+table: brand_override
+label_mode: stacked
+body:
+  - { name: brand, widget: dropdown }
+  - { name: rollout, required: false }
+  - { name: allowlist, multiline: 3, required: false }

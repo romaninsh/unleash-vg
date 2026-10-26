@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Connected apps (spec 05 screen 6): one row per app x environment x SDK version.
+datasource: flags
+title: Connected apps
+columns:
+  id: { type: string, flags: [id, hidden] }
+  app_name: { label: App, type: string, flags: [title, searchable] }
+  environment: { type: string }
+  sdk_version: { label: SDK version, type: string }
+  instances: { type: int }
+  last_seen_at: { label: Last seen, type: string }
+surreal:
+  rhai: |
+    select()
+        .from(
+            select()
+                .field("app_name")
+                .field("environment")
+                .expression(expr("sdk_version ?? 'unknown'").alias("sdk_version"))
+                .expression(count().alias("instances"))
+                .expression(expr("<string> time::max(last_seen_at)").alias("last_seen_at"))
+                .from("client_app")
+                .group_by(expr("app_name, environment, sdk_version"))
+                .subquery())
+        .expression(fx("type::record", [expr("'client_app_group'"), expr("app_name + ':' + environment + ':' + sdk_version")]).alias("id"))
+        .field("app_name").field("environment").field("sdk_version").field("instances").field("last_seen_at")
+        .order_by(ident("app_name"), "asc")

@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# Audit log (spec 05 screen 5, spec 07). Events are written by the database and can't be changed.
+title: Audit log
+body:
+  - kind: binder
+    name: events
+    observe: audit_event
+    params:
+      allow_add: false
+      details: false
+      views: [event_detail]
+      default_sort: { column: created_at, direction: desc }
+      filter: [created_by, flag, environment, brand, type, ">=created_at", "<=created_at", "~summary"]
+      columns:
+        created_text: { label: Time, render: relative, width: 100 }
+        created_by: { label: User, width: 180 }
+        flag: { label: Flag, width: 190 }
+        summary: { label: Change, width: 420 }
+        environment: { label: Environment, width: 100 }
+        brand: { label: Brand, width: 80 }
+        type: { label: Event, width: 230 }
+      row_actions:
+        - label: Open flag
+          icon: ExternalLink
+          when: 'row.flag != ()'
+          navigate: flag
+          args: { name: "row.flag" }

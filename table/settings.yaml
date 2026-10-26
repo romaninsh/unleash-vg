@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# One record: settings:main.
+datasource: flags
+title: Settings
+columns:
+  id: { type: string, flags: [id, hidden] }
+  brand_context_field: { label: Brand context field, type: string, flags: [title, mandatory] }
+  customer_context_field: { label: Customer context field, type: string, flags: [mandatory] }
+  frontend_cors_origins: { label: Frontend CORS origins, type: string }
+  unused_flag_days: { label: Unused-flag threshold (days), type: int, flags: [mandatory] }
+  metrics_retention_days: { label: Metrics retention (days), type: int, flags: [mandatory] }

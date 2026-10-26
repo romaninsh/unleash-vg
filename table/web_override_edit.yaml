@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web: add, change and remove brand overrides. The web API scopes it on env_key.
+datasource: flags
+title: Brand overrides (web, edit)
+columns:
+  id: { type: string, flags: [id] }
+  scope: { type: string }
+  brand: { type: string, references: { table: brand, kind: has_one, name: brand } }
+  rollout: { type: int }
+  allowlist: { type: string }
+  env_key: { type: string }
+  updated_by: { type: string }
+surreal:
+  table: brand_override

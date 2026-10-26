@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# Web admin: users (spec 05 screen 9). The web API scopes it to admins (admin_scope).
+# A create or reset sends a temporary password once in new_password; only its hash is kept.
+datasource: flags
+title: Users (web admin)
+columns:
+  id: { type: string, flags: [id] }
+  name: { type: string, flags: [title] }
+  email: { type: string }
+  role: { type: string }
+  editable_environments: { type: string }
+  active: { type: bool }
+  must_change_password: { type: bool }
+  new_password: { type: string }
+  admin_scope: { type: string }
+  updated_by: { type: string }
+  last_login_text: { type: string, expr: 'expr("IF last_login_at = NONE THEN '''' ELSE <string> last_login_at END")' }
+  password_changed_text: { type: string, expr: 'expr("IF password_changed_at = NONE THEN '''' ELSE <string> password_changed_at END")' }
+surreal:
+  table: app_user

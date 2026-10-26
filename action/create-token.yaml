@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./action-schema-1.json
+kind: form
+dialog:
+  title: Create API token
+  description: "Backend tokens are for server SDKs (Client API); frontend tokens for web and mobile apps (Frontend API). The secret is shown once, on the next screen."
+  confirm_label: Create
+form:
+  fields:
+    - { name: name, type: string, label: "Name (e.g. payments-service prod)" }
+    - { name: type, type: string, label: Type, widget: checklist, choices: [backend, frontend] }
+    - name: environment
+      type: string
+      label: Environment
+      widget: dropdown
+      option_label: display_name
+      options: |
+        table("environment").sort("sort_order")
