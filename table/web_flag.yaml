@@ -30,13 +30,13 @@ columns:
   production_brands: { type: string }
 surreal:
   rhai: |
-    select()
+    surreal::select()
         .from("flag")
         .field("id").field("name").field("name_sort").field("description").field("tags")
         .field("stale").field("development").field("uat").field("production")
         .field("override_count").field("created_by")
         .field("search_text").field("tags_key").field("last_activity").field("last_seen_by_env")
         .field("development_brands").field("uat_brands").field("production_brands")
-        .expression(expr("IF last_seen = NONE THEN '' ELSE <string> last_seen END").alias("last_seen_text"))
-        .expression(expr("<string> created_at").alias("created_text"))
-        .where(ident("archived") != true)
+        .expression(surreal::expr("IF last_seen = NONE THEN '' ELSE <string> last_seen END").alias("last_seen_text"))
+        .expression(surreal::expr("<string> created_at").alias("created_text"))
+        .where(surreal::ident("archived") != true)

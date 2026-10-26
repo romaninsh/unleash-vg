@@ -19,10 +19,10 @@ columns:
   created_by: { type: string }
 surreal:
   rhai: |
-    select()
+    surreal::select()
         .from("flag")
         .field("id").field("name").field("description").field("archived_by")
         .field("tags").field("stale").field("development").field("uat").field("production").field("created_by")
-        .expression(expr("<string> created_at").alias("created_text"))
-        .expression(expr("IF archived_at = NONE THEN '' ELSE <string> archived_at END").alias("archived_text"))
-        .where(ident("archived") == true)
+        .expression(surreal::expr("<string> created_at").alias("created_text"))
+        .expression(surreal::expr("IF archived_at = NONE THEN '' ELSE <string> archived_at END").alias("archived_text"))
+        .where(surreal::ident("archived") == true)

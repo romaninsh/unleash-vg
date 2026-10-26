@@ -14,7 +14,7 @@ columns:
   new_password: { type: string }
   admin_scope: { type: string }
   updated_by: { type: string }
-  last_login_text: { type: string, expr: 'expr("IF last_login_at = NONE THEN '''' ELSE <string> last_login_at END")' }
-  password_changed_text: { type: string, expr: 'expr("IF password_changed_at = NONE THEN '''' ELSE <string> password_changed_at END")' }
+  last_login_text: { type: string, expr: 'surreal::expr("IF last_login_at = NONE THEN '''' ELSE <string> last_login_at END")' }
+  password_changed_text: { type: string, expr: 'surreal::expr("IF password_changed_at = NONE THEN '''' ELSE <string> password_changed_at END")' }
 surreal:
   table: app_user

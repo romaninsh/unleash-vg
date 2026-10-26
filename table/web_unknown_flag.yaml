@@ -11,7 +11,7 @@ columns:
   last_seen_text: { type: string }
 surreal:
   rhai: |
-    select()
+    surreal::select()
         .from("unknown_flag")
         .field("id").field("name").field("environment").field("app_name").field("count")
-        .expression(expr("<string> last_seen_at").alias("last_seen_text"))
+        .expression(surreal::expr("<string> last_seen_at").alias("last_seen_text"))

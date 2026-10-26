@@ -19,9 +19,9 @@ columns:
   data: { type: string }
 surreal:
   rhai: |
-    select()
+    surreal::select()
         .from("audit_event")
         .field("id").field("created_at").field("created_by").field("type").field("flag")
         .field("environment").field("brand").field("summary").field("pre_data").field("data")
-        .expression(expr("<string> created_at").alias("created_text"))
-        .where(ident("created_at") != expr("NONE"))
+        .expression(surreal::expr("<string> created_at").alias("created_text"))
+        .where(surreal::ident("created_at") != surreal::expr("NONE"))

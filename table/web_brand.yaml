@@ -10,5 +10,5 @@ columns:
   active: { type: bool }
 surreal:
   rhai: |
-    select().from("brand").field("id").field("key").field("display_name").field("active")
-        .where(ident("key") != expr("NONE"))
+    surreal::select().from("brand").field("id").field("key").field("display_name").field("active")
+        .where(surreal::ident("key") != surreal::expr("NONE"))

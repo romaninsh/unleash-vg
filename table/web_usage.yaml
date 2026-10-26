@@ -7,10 +7,10 @@ datasource: flags
 title: Flag usage (web, read)
 columns:
   id: { type: string, flags: [id] }
-  flag_name: { type: string, flags: [title], expr: 'expr("flag_name")' }
-  env_key: { type: string, expr: 'expr("env_key")' }
-  seen_text: { type: string, expr: 'expr("fn::env_seen(id)")' }
-  usage_day: { type: string, expr: 'expr("fn::usage(flag_name, env_key, 24h)")' }
-  usage_week: { type: string, expr: 'expr("fn::usage(flag_name, env_key, 7d)")' }
+  flag_name: { type: string, flags: [title], expr: 'surreal::expr("flag_name")' }
+  env_key: { type: string, expr: 'surreal::expr("env_key")' }
+  seen_text: { type: string, expr: 'surreal::expr("fn::env_seen(id)")' }
+  usage_day: { type: string, expr: 'surreal::expr("fn::usage(flag_name, env_key, 24h)")' }
+  usage_week: { type: string, expr: 'surreal::expr("fn::usage(flag_name, env_key, 7d)")' }
 surreal:
   table: flag_env

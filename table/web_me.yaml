@@ -10,5 +10,5 @@ columns:
   editable_environments: { type: string }
 surreal:
   rhai: |
-    select().from("app_user").field("id").field("name").field("email").field("role").field("editable_environments")
-        .where(ident("active") == true)
+    surreal::select().from("app_user").field("id").field("name").field("email").field("role").field("editable_environments")
+        .where(surreal::ident("active") == true)

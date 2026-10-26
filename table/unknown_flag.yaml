@@ -9,4 +9,4 @@ columns:
   app_name: { label: App, type: string }
   count: { label: Evaluations, type: int }
   last_seen_at: { label: Last seen, type: timestamp }
-  last_seen_text: { label: Last seen, type: string, expr: 'expr("<string> last_seen_at")' }
+  last_seen_text: { label: Last seen, type: string, expr: 'surreal::expr("<string> last_seen_at")' }

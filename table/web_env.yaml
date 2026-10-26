@@ -11,14 +11,14 @@ datasource: flags
 title: Flag environments (web, read)
 columns:
   id: { type: string, flags: [id] }
-  flag_name: { type: string, flags: [title], expr: 'expr("flag_name")' }
-  env_key: { type: string, expr: 'expr("env_key")' }
-  is_on: { type: bool, expr: 'expr("enabled")' }
-  rule_rollout: { type: int, expr: 'expr("default_rollout")' }
-  rule_allowlist: { type: string, expr: 'expr("default_allowlist")' }
-  default_label: { type: string, expr: 'expr("fn::rule_label(default_rollout, default_allowlist)")' }
-  detail: { type: string, expr: 'expr("fn::env_detail(id)")' }
-  seen: { type: string, expr: 'expr("fn::env_seen(id)")' }
-  rule_revision: { type: int, expr: 'expr("revision")' }
+  flag_name: { type: string, flags: [title], expr: 'surreal::expr("flag_name")' }
+  env_key: { type: string, expr: 'surreal::expr("env_key")' }
+  is_on: { type: bool, expr: 'surreal::expr("enabled")' }
+  rule_rollout: { type: int, expr: 'surreal::expr("default_rollout")' }
+  rule_allowlist: { type: string, expr: 'surreal::expr("default_allowlist")' }
+  default_label: { type: string, expr: 'surreal::expr("fn::rule_label(default_rollout, default_allowlist)")' }
+  detail: { type: string, expr: 'surreal::expr("fn::env_detail(id)")' }
+  seen: { type: string, expr: 'surreal::expr("fn::env_seen(id)")' }
+  rule_revision: { type: int, expr: 'surreal::expr("revision")' }
 surreal:
   table: flag_env

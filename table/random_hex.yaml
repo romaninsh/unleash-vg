@@ -7,7 +7,7 @@ columns:
   hex: { type: string }
 surreal:
   rhai: |
-    select()
-        .expression(ident("id"))
-        .expression(expr("string::slice(crypto::sha256(rand::string(64)), 0, 56)").alias("hex"))
-        .from(expr("settings:main"))
+    surreal::select()
+        .expression(surreal::ident("id"))
+        .expression(surreal::expr("string::slice(crypto::sha256(rand::string(64)), 0, 56)").alias("hex"))
+        .from(surreal::expr("settings:main"))

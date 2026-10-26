@@ -6,8 +6,8 @@ datasource: flags
 title: Compiled feature (web, read)
 columns:
   id: { type: string, flags: [id] }
-  flag_name: { type: string, flags: [title], expr: 'expr("flag_name")' }
-  env_key: { type: string, expr: 'expr("env_key")' }
-  served: { type: string, expr: 'expr("encoding::json::encode(fn::compile(id))")' }
+  flag_name: { type: string, flags: [title], expr: 'surreal::expr("flag_name")' }
+  env_key: { type: string, expr: 'surreal::expr("env_key")' }
+  served: { type: string, expr: 'surreal::expr("encoding::json::encode(fn::compile(id))")' }
 surreal:
   table: flag_env

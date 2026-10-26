@@ -9,7 +9,7 @@ columns:
   active: { type: bool }
   admin_scope: { type: string }
   updated_by: { type: string }
-  created_text: { type: string, expr: 'expr("<string> created_at")' }
-  overrides: { type: int, expr: 'expr("count(SELECT id FROM brand_override WHERE brand = $parent.id)")' }
+  created_text: { type: string, expr: 'surreal::expr("<string> created_at")' }
+  overrides: { type: int, expr: 'surreal::expr("count(SELECT id FROM brand_override WHERE brand = $parent.id)")' }
 surreal:
   table: brand

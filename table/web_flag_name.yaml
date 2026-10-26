@@ -9,15 +9,15 @@ columns:
   events: { type: int }
 surreal:
   rhai: |
-    select()
+    surreal::select()
         .from(
-            select()
+            surreal::select()
                 .from("audit_event")
-                .expression(expr("flag").alias("name"))
-                .expression(expr("count()").alias("events"))
-                .where(ident("flag") != expr("NONE"))
-                .group_by(ident("name"))
+                .expression(surreal::expr("flag").alias("name"))
+                .expression(surreal::expr("count()").alias("events"))
+                .where(surreal::ident("flag") != surreal::expr("NONE"))
+                .group_by(surreal::ident("name"))
                 .subquery())
-        .expression(fx("type::record", [expr("'flag_name'"), ident("name")]).alias("id"))
+        .expression(surreal::fx("type::record", [surreal::expr("'flag_name'"), surreal::ident("name")]).alias("id"))
         .field("name").field("events")
-        .where(ident("name") != expr("NONE"))
+        .where(surreal::ident("name") != surreal::expr("NONE"))

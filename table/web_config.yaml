@@ -11,7 +11,7 @@ columns:
   customer_context_field: { type: string }
 surreal:
   rhai: |
-    select().from("settings").field("id").field("unused_flag_days")
+    surreal::select().from("settings").field("id").field("unused_flag_days")
         .field("brand_context_field").field("customer_context_field")
-        .expression(expr("<string> usage_recording_since").alias("usage_since_text"))
-        .where(ident("unused_flag_days") > 0)
+        .expression(surreal::expr("<string> usage_recording_since").alias("usage_since_text"))
+        .where(surreal::ident("unused_flag_days") > 0)

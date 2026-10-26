@@ -10,7 +10,7 @@ columns:
   unused_flag_days: { type: int }
   metrics_retention_days: { type: int }
   admin_scope: { type: string }
-  usage_since_text: { type: string, expr: 'expr("<string> usage_recording_since")' }
+  usage_since_text: { type: string, expr: 'surreal::expr("<string> usage_recording_since")' }
   updated_by: { type: string }
 surreal:
   table: settings

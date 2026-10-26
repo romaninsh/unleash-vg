@@ -9,5 +9,5 @@ columns:
   flags: { type: int }
 surreal:
   rhai: |
-    select().from("known_tag").field("id").field("name").field("flags")
-        .where(ident("flags") > 0)
+    surreal::select().from("known_tag").field("id").field("name").field("flags")
+        .where(surreal::ident("flags") > 0)
