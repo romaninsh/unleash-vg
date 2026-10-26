@@ -42,7 +42,8 @@ if change.table == "brand_override" || change.table == "web_override_edit" {
     log.brand = brand_key;
     if change.action == "new" {
         // a new override without a rollout starts as a copy of the default rule (the database fills it)
-        let stored = table("brand_override").get(change.id);
+        // by the bare id: a create through another table key reports the id under that key
+        let stored = table("brand_override").get(key(change.id));
         let r = if stored == () { row } else { stored };
         log.type = "feature-brand-override-added";
         log.summary = `${env} - ${brand_name}: override added, ${label(r.rollout, r.allowlist)}`;

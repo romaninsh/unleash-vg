@@ -35,15 +35,15 @@ const maria = await connect("maria.lopez@example.com:demo");
 say("maria signs in", maria.hello);
 say("create flag zz-web-check", await maria.send({ t: "flash", table: "flag_edits", patch: {
   id: "zz-web-check", name: "zz-web-check", description: "temporary web check", tags: "web", edit_scope: "all",
-  created_by: "maria.lopez@example.com", updated_by: "maria.lopez@example.com" } }));
+  created_by: "maria.lopez@example.com" } }));
 const tomTry = await connect("support@example.com:demo");
 say("viewer: create flag (must be refused)", await tomTry.send({ t: "flash", table: "flag_edits", patch: {
-  id: "zz-viewer-check", name: "zz-viewer-check", edit_scope: "all", updated_by: "support@example.com" } }));
+  id: "zz-viewer-check", name: "zz-viewer-check", edit_scope: "all" } }));
 tomTry.ws.close();
 say("switch uat on + 25%", await maria.send({ t: "flash", table: "environment_edits", rid: "flag_env:zz-web-check@uat",
   patch: { enabled: true, default_rollout: 25, updated_by: "maria.lopez@example.com" } }));
 const add = await maria.send({ t: "flash", table: "override_edits",
-  patch: { scope: "zz-web-check@uat", brand: "brand:bank-c", env_key: "uat", updated_by: "maria.lopez@example.com" } });
+  patch: { scope: "zz-web-check@uat", brand: "brand:bank-c", env_key: "uat" } });
 say("add override bank-c (copies default)", add);
 // the page takes ids from the read-only `overrides` list, which re-reads every 2 s
 await new Promise((r) => setTimeout(r, 3000));
@@ -57,16 +57,15 @@ for (const candidate of [`brand_override:${key}`, `web_override_edit:${key}`, ke
 }
 const rid = add.rid ?? add.record?.id;
 say("change override to OFF + 2 customers", await maria.send({ t: "flash", table: "override_edits", rid,
-  patch: { rollout: 0, allowlist: "77 78", updated_by: "maria.lopez@example.com" } }));
-await maria.send({ t: "flash", table: "override_edits", rid, patch: { updated_by: "maria.lopez@example.com" } });
+  patch: { rollout: 0, allowlist: "77 78" } }));
 say("remove override", await maria.send({ t: "delete", table: "override_edits", rid }));
-say("mark stale", await maria.send({ t: "flash", table: "flag_edits", rid: "flag:zz-web-check", patch: { stale: true, updated_by: "maria.lopez@example.com" } }));
+say("mark stale", await maria.send({ t: "flash", table: "flag_edits", rid: "flag:zz-web-check", patch: { stale: true } }));
 
 const tom = await connect("tom.berg@example.com:demo");
 say("tom: switch production on (must be refused)", await tom.send({ t: "flash", table: "environment_edits", rid: "flag_env:zz-web-check@production",
   patch: { enabled: true, updated_by: "tom.berg@example.com" } }));
 say("tom: add production override (must be refused)", await tom.send({ t: "flash", table: "override_edits",
-  patch: { scope: "zz-web-check@production", brand: "brand:bank-a", env_key: "production", updated_by: "tom.berg@example.com" } }));
+  patch: { scope: "zz-web-check@production", brand: "brand:bank-a", env_key: "production" } }));
 
 const hist = await maria.send({ t: "open_table", table: "history", where: [["flag", "eq", "zz-web-check"]], sort: ["created_at", "asc"] });
 const recs = Array.isArray(hist.records) ? hist.records : Object.values(hist.records ?? {});

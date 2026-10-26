@@ -68,14 +68,24 @@ only our deployment, so visitors' tokens never pass through our server. Add our 
 The app was built on Vantage 1.5.2. Newer Vantage can replace hand-made parts:
 `read_only: true` instead of query tables used as read-only views, Vantage's hashing functions
 instead of SurrealQL ones, `log_changes:` for the audit log instead of database events, and
-`invariants:` rules instead of the `*_scope` fields. (Done: the flag service compiles flags itself,
-`service/src/compile.rs`, and the admin app and web API read them from its `/internal/features`.)
+`invariants:` rules instead of the `*_scope` fields. Done so far: the flag service compiles flags
+itself (`service/src/compile.rs`) and the admin app and web API read them from its
+`/internal/features`; the audit log is written by Vantage's `log_changes:` (`script/log_*.rhai`),
+except the brand overrides a web card save changes, which the database logs inside that save.
+
+## CI: audit log checks
+
+Run the web probes (`tests/web_*_probe.mjs`) against a running API and then check that no
+`audit_event` row's `pre_data` / `data` holds a password, temporary password or token secret
+(`password`, `new_password`, `new_secret`, `secret_hash`): `log_user.rhai` keeps `new_password`
+out by replacing before/after, not by `exclude:`, so a test should pin it.
 
 ## Running on MongoDB
 
-About 730 lines of SurrealQL run inside the database (9 events, 24 functions in
-`tests/schema.surql` and `tests/events.surql`), so moving to MongoDB means moving that logic into
-the app and the flag service first. Choosing a backend per profile also needs Vantage support: a
+About 420 lines of SurrealQL run inside the database (9 events, 14 functions in
+`tests/schema.surql` and `tests/events.surql`): rules, the atomic card save, tag counts, revision
+bumps and the list summaries. Moving to MongoDB means moving that logic into the app and the flag
+service first. Choosing a backend per profile also needs Vantage support: a
 profile can change a datasource's URL today, not its type.
 
 ## Production hardening

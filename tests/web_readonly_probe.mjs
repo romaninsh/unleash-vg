@@ -14,7 +14,7 @@ await new Promise((r) => (ws.onopen = r));
 await send({ t: "hello", protocol: 1, token: "admin@example.com:demo" });
 
 const F = "zz-readonly-probe";
-const made = await send({ t: "flash", table: "flag_edits", patch: { id: F, name: F, description: "probe", edit_scope: "all", created_by: "probe", updated_by: "probe" } });
+const made = await send({ t: "flash", table: "flag_edits", patch: { id: F, name: F, description: "probe", edit_scope: "all", created_by: "probe" } });
 console.log("throwaway flag:".padEnd(26), made.t, made.message ?? "");
 
 let bad = 0;

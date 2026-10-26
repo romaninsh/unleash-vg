@@ -1,6 +1,7 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# The audit log. Vantage writes it for tables with `log_changes:` (brands so far); the database
-# rules (tests/events.surql) write the rest. Can't be changed or deleted.
+# The audit log. Vantage writes it for every change it makes (`log_changes:` on the tables,
+# scripts in script/log_*.rhai); the database writes only the brand overrides of a web card save
+# (tests/events.surql). Can't be changed or deleted.
 datasource: flags
 title: Audit log
 columns:
