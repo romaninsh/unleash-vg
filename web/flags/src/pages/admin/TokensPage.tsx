@@ -81,7 +81,6 @@ export const TokensPage = observer(() => {
 });
 
 const TokenRow = observer(({ t }: { t: TokenAdmin }) => {
-  const { email } = usePermissions();
   const [error, setError] = useState<string | null>(null);
   return (
     <tr>
@@ -97,9 +96,6 @@ const TokenRow = observer(({ t }: { t: TokenAdmin }) => {
           className="danger"
           onClick={async () => {
             if (!confirm(`Revoke "${t.name}"? Apps using it get 401 within 30 seconds.`)) return;
-            // so the history names who revoked it
-            const marked = await t.patch({ updated_by: email });
-            if (!marked.ok) return setError(friendlyError(marked.error.message));
             const r = await t.delete();
             if (!r.ok) setError(friendlyError(r.error.message));
           }}

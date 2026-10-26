@@ -132,7 +132,7 @@ entities:
   - name: token_admin
     observe: web_token_admin
     params:
-      columns: [name, type, environment, env_key, source, hint, created_by, created_at, last_used_at, new_secret, admin_scope, updated_by]
+      columns: [name, type, environment, env_key, source, hint, created_by, created_at, last_used_at, new_secret, admin_scope]
       default_sort: name
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: user_admin

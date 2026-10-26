@@ -225,8 +225,6 @@ DEFINE FIELD OVERWRITE hint         ON api_token TYPE string
 DEFINE FIELD OVERWRITE admin_scope  ON api_token TYPE string VALUE 'all';
 DEFINE FIELD OVERWRITE created_at   ON api_token TYPE datetime DEFAULT time::now();
 DEFINE FIELD OVERWRITE created_by   ON api_token TYPE string DEFAULT 'admin';
--- who revokes it (the web app sets it just before deleting)
-DEFINE FIELD OVERWRITE updated_by   ON api_token TYPE option<string>;
 DEFINE FIELD OVERWRITE last_used_at ON api_token TYPE option<datetime>;
 DEFINE INDEX OVERWRITE api_token_lookup ON api_token FIELDS lookup;
 

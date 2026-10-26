@@ -217,21 +217,10 @@ DEFINE EVENT OVERWRITE settings_changes ON TABLE settings THEN {
 
 -- ---------------------------------------------------------------- API tokens (secrets never logged)
 
-DEFINE EVENT OVERWRITE api_token_changes ON TABLE api_token THEN {
-    LET $by = $after.created_by ?? 'admin';
+-- Token changes are audited by Vantage (table/api_token.yaml log_changes:, secrets excluded).
+DEFINE EVENT OVERWRITE api_token_changes ON TABLE api_token WHEN $event != 'DELETE' THEN {
     -- the secret itself is never kept: only its hash, lookup and hint
-    IF $event != 'DELETE' AND $after.new_secret != NONE { UPDATE $after.id SET new_secret = NONE; };
-    IF $event = 'CREATE' {
-        fn::audit($by, IF $after.source = 'imported' THEN 'api-token-imported' ELSE 'api-token-created' END, NONE,
-            record::id($after.environment), NONE,
-            record::id($after.environment) + ' - ' + $after.type + ' token "' + $after.name + '" '
-                + IF $after.source = 'imported' THEN 'imported' ELSE 'created' END,
-            NONE, { name: $after.name, type: $after.type, environment: record::id($after.environment) });
-    } ELSE IF $event = 'DELETE' {
-        fn::audit($before.updated_by ?? 'admin', 'api-token-deleted', NONE, record::id($before.environment), NONE,
-            record::id($before.environment) + ' - ' + $before.type + ' token "' + $before.name + '" revoked',
-            { name: $before.name, type: $before.type, environment: record::id($before.environment) }, NONE);
-    };
+    IF $after.new_secret != NONE { UPDATE $after.id SET new_secret = NONE; };
 };
 
 -- ---------------------------------------------------------------- users

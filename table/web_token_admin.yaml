@@ -17,6 +17,10 @@ columns:
   last_used_at: { type: timestamp, flags: [calculated] }
   new_secret: { type: string }
   admin_scope: { type: string }
-  updated_by: { type: string }
 surreal:
   table: api_token
+log_changes:
+  into: audit_event
+  exclude: [new_secret, secret_hash, lookup]
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_token.rhai
