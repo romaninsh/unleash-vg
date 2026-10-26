@@ -220,7 +220,21 @@ const About = observer(({ flag, archived }: { flag: Summary; archived: boolean }
 /** Last seen and yes/no counts for every environment at once (spec 08). */
 const Usage = observer(({ flag }: { flag: string }) => {
   const db = useDb();
-  const rows = useCollection(db.usage.where({ flag_name: flag })).items;
+  const envs = useCollection(db.environments.where({ flag_name: flag })).items;
+  const hours = useCollection(db.usage.where({ flag })).items;
+  const now = Date.now();
+  /** "9105 yes / 117 no" for environment `env` over the last `ms`. */
+  const counts = (env: string, ms: number) => {
+    let yes = 0;
+    let no = 0;
+    for (const h of hours) {
+      if (h.environment === env && h.hour && now - Date.parse(h.hour) <= ms) {
+        yes += h.yes ?? 0;
+        no += h.no ?? 0;
+      }
+    }
+    return `${yes} yes / ${no} no`;
+  };
   return (
     <div className="card">
       <h3>Usage</h3>
@@ -228,13 +242,13 @@ const Usage = observer(({ flag }: { flag: string }) => {
         <thead><tr><th /><th>Last seen</th><th>24 h</th><th>7 d</th></tr></thead>
         <tbody>
           {ENVIRONMENTS.map((e) => {
-            const r = rows.find((x) => x.env_key === e);
+            const r = envs.find((x) => x.env_key === e);
             return (
               <tr key={e}>
                 <td>{e}</td>
-                <td className="muted" title={r?.seen_text ?? ""}>{!r ? "…" : r.seen_text === "never" ? "never" : relTime(r.seen_text)}</td>
-                <td className="small">{r?.usage_day}</td>
-                <td className="small">{r?.usage_week}</td>
+                <td className="muted" title={r?.seen_at ?? ""}>{!r ? "…" : r.seen_at ? relTime(r.seen_at) : "never"}</td>
+                <td className="small">{counts(e, 24 * 3600_000)}</td>
+                <td className="small">{counts(e, 7 * 24 * 3600_000)}</td>
               </tr>
             );
           })}

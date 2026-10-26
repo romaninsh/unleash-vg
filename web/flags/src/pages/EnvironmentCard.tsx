@@ -33,18 +33,18 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
   const [rebaseFrom, setRebaseFrom] = useState<number | null>(null);
 
   const server = {
-    def: { rollout: fe?.rule_rollout ?? 100, allowlist: fe?.rule_allowlist ?? "" },
+    def: { rollout: fe?.default_rollout ?? 100, allowlist: fe?.default_allowlist ?? "" },
     overrides: ovs.map((o) => ({ brand: o.brand_key ?? "", rollout: o.rollout ?? 0, allowlist: o.allowlist ?? "" })),
   };
-  const view: Draft = draft ?? { baseRev: fe?.rule_revision ?? 0, ...server };
+  const view: Draft = draft ?? { baseRev: fe?.revision ?? 0, ...server };
   const dirty = draft !== null && !sameRules(draft, server);
   useEffect(() => { onDirty(dirty); }, [dirty]);
   useEffect(() => {
-    if (draft && rebaseFrom !== null && fe && (fe.rule_revision ?? 0) > rebaseFrom) {
-      setDraft({ ...draft, baseRev: fe.rule_revision ?? 0 });
+    if (draft && rebaseFrom !== null && fe && (fe.revision ?? 0) > rebaseFrom) {
+      setDraft({ ...draft, baseRev: fe.revision ?? 0 });
       setRebaseFrom(null);
     }
-  }, [fe?.rule_revision]);
+  }, [fe?.revision]);
 
   if (!fe) return <div className="card">Loading…</div>;
 
@@ -58,12 +58,12 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
 
   async function toggle() {
     if (!edit.value || !fe) return;
-    const next = !fe.is_on;
+    const next = !fe.enabled;
     if (env === "production" && !confirm(`Turn ${flag} ${next ? "ON" : "OFF"} in production?\nApps get the change within a few seconds.`)) return;
     setError(null);
-    const r = await edit.value.patch({ enabled: next, expected_revision: fe.rule_revision ?? 0, updated_by: email });
+    const r = await edit.value.patch({ enabled: next, expected_revision: fe.revision ?? 0, updated_by: email });
     if (!r.ok) return isConflict(r.error.message) ? setConflict(friendlyError(r.error.message)) : setError(friendlyError(r.error.message));
-    if (draft) setRebaseFrom(fe.rule_revision ?? 0);
+    if (draft) setRebaseFrom(fe.revision ?? 0);
   }
 
   async function save() {
@@ -84,7 +84,7 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
     if (!src) return;
     change((d) => ({
       baseRev: d.baseRev,
-      def: { rollout: src.rule_rollout ?? 100, allowlist: src.rule_allowlist ?? "" },
+      def: { rollout: src.default_rollout ?? 100, allowlist: src.default_allowlist ?? "" },
       overrides: srcOvs.map((o) => ({ brand: o.brand_key ?? "", rollout: o.rollout ?? 0, allowlist: o.allowlist ?? "" })),
     }));
   }
@@ -95,10 +95,13 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
     <div className="card envcard">
       <div className="envhead">
         <div>
-          <b className="upper">{env}</b> · <span className={fe.is_on ? "rule-on" : "rule-disabled"}>switch {fe.is_on ? "ON" : "OFF"}</span>
-          <div className="muted small">{fe.detail}</div>
+          <b className="upper">{env}</b> · <span className={fe.enabled ? "rule-on" : "rule-disabled"}>switch {fe.enabled ? "ON" : "OFF"}</span>
+          <div className="muted small">
+            Default (all other brands): {fe.default_label}
+            {ovs.length > 0 && `  ·  ${ovs.length} brand override${ovs.length === 1 ? "" : "s"}`}
+          </div>
         </div>
-        <span className="muted small">{fe.seen === "never" ? "never seen" : `last seen ${relTime(fe.seen)}`}</span>
+        <span className="muted small">{fe.seen_at ? `last seen ${relTime(fe.seen_at)}` : "never seen"}</span>
       </div>
       {!editable && (
         <p className="lock" title={archived ? "Revive the flag to change it" : `Your role doesn't include ${env}`}>
@@ -109,10 +112,10 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
       {editable && (
         <div className="row">
           <span className="label">Switch</span>
-          <button type="button" className={fe.is_on ? "switch on" : "switch"} onClick={() => void toggle()} disabled={!edit.value} aria-pressed={!!fe.is_on}>
-            <span className="knob" /> {fe.is_on ? "ON" : "OFF"}
+          <button type="button" className={fe.enabled ? "switch on" : "switch"} onClick={() => void toggle()} disabled={!edit.value} aria-pressed={!!fe.enabled}>
+            <span className="knob" /> {fe.enabled ? "ON" : "OFF"}
           </button>
-          <span className="muted small">{fe.is_on ? "Served by the rules below." : "Off for everyone in this environment."}</span>
+          <span className="muted small">{fe.enabled ? "Served by the rules below." : "Off for everyone in this environment."}</span>
           <span className="spacer" />
           <label className="small">
             Copy rules from{" "}
@@ -129,7 +132,7 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
           <b>{conflict.replace(/ - your edits were not saved$/, "")}.</b> Your edits are still below and were not saved.
           <div className="actions left">
             <button onClick={discard}>Discard mine</button>
-            <button className="primary" onClick={() => { setDraft({ ...view, baseRev: fe.rule_revision ?? 0 }); setConflict(null); }}>
+            <button className="primary" onClick={() => { setDraft({ ...view, baseRev: fe.revision ?? 0 }); setConflict(null); }}>
               Keep my edits
             </button>
           </div>
@@ -199,7 +202,7 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
       )}
       {(error || edit.error) && <p role="alert" className="error">{error ?? edit.error}</p>}
 
-      <Preview flag={flag} env={env} enabled={!!fe.is_on} saved={server} names={names} brands={brands.map((b) => b.key ?? "")} dirty={dirty} />
+      <Preview flag={flag} env={env} enabled={!!fe.enabled} saved={server} names={names} brands={brands.map((b) => b.key ?? "")} dirty={dirty} />
     </div>
   );
 });

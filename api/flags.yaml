@@ -26,9 +26,9 @@ entities:
     api: { collection_limit: 10000, refresh: 3 }
   - name: environments
     observe: web_env
+    read_only: true
     params:
-      # names differ from the stored fields on purpose: that keeps it read-only (table/web_env.yaml)
-      columns: [flag_name, env_key, is_on, rule_rollout, rule_allowlist, default_label, detail, seen, rule_revision]
+      columns: [flag_name, env_key, enabled, default_rollout, default_allowlist, default_label, seen_at, revision]
       filter: [flag_name, env_key]
       default_sort: env_key
   - name: overrides
@@ -83,17 +83,19 @@ entities:
     api: { load: instant }
   - name: compiled
     observe: web_compiled
+    read_only: true
     params:
-      # names differ from stored fields on purpose: read-only (table/web_compiled.yaml)
       columns: [flag_name, env_key, served]
       filter: [flag_name, env_key]
   - name: usage
     observe: web_usage
+    read_only: true
     params:
-      # names differ from stored fields on purpose: read-only (table/web_usage.yaml)
-      columns: [flag_name, env_key, seen_text, usage_day, usage_week]
-      filter: [flag_name, env_key]
-      default_sort: env_key
+      columns: [flag, environment, app_name, hour, "yes", "no"]
+      filter: [flag]
+      default_sort: -hour
+    # every hour kept for one flag (hours x environments x apps); the page adds them up
+    api: { collection_limit: 10000 }
   - name: flag_names
     observe: web_flag_name
     params:

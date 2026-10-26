@@ -1,16 +1,16 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# Web: last seen and yes/no counts of one flag in each environment (the flag page's Usage card).
-# Reads flag_env directly (index on flag_name), so only the asked rows are computed.
-# READ-ONLY BY NAMING, like web_env: no column shares a name with a stored flag_env field
-# except flag_name/env_key, which the database computes.
+# Web: a flag's yes/no counts per hour, environment and app, as the SDK service records them
+# (kept for the metrics retention in Settings). Read-only; the flag page's Usage card adds up
+# the last 24 hours and 7 days.
 datasource: flags
-title: Flag usage (web, read)
+title: Flag usage per hour (web, read)
 columns:
   id: { type: string, flags: [id] }
-  flag_name: { type: string, flags: [title], expr: 'surreal::expr("flag_name")' }
-  env_key: { type: string, expr: 'surreal::expr("env_key")' }
-  seen_text: { type: string, expr: 'surreal::expr("fn::env_seen(id)")' }
-  usage_day: { type: string, expr: 'surreal::expr("fn::usage(flag_name, env_key, 24h)")' }
-  usage_week: { type: string, expr: 'surreal::expr("fn::usage(flag_name, env_key, 7d)")' }
+  flag: { type: string, flags: [title] }
+  environment: { type: string }
+  app_name: { type: string }
+  hour: { type: timestamp }
+  "yes": { type: int }
+  "no": { type: int }
 surreal:
-  table: flag_env
+  table: metric_hourly

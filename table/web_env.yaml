@@ -1,24 +1,21 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# Web: one flag x environment with its summary lines, read-only for everyone.
-# Reads flag_env directly (index on flag_name, env_key), so only the requested rows are
-# computed and changes arrive live. It can't be a query table: those filter outside the query,
-# which would compute detail/seen for all 15,000 rows (3 s).
-# READ-ONLY BY NAMING: expr: columns are still written by the API (FEEDBACK.md), so no column
-# here may share a name with a stored flag_env field - a write then names a field the
-# SCHEMAFULL table doesn't have and SurrealDB refuses it. flag_name/env_key are the exception:
-# the database computes them (VALUE), so writing them changes nothing.
+# Web: one flag x environment, read-only for everyone (the API entity is `read_only: true`;
+# changes go through environment_edits). Reads flag_env directly (index on flag_name, env_key),
+# so only the requested rows are computed.
 datasource: flags
 title: Flag environments (web, read)
 columns:
   id: { type: string, flags: [id] }
-  flag_name: { type: string, flags: [title], expr: 'surreal::expr("flag_name")' }
-  env_key: { type: string, expr: 'surreal::expr("env_key")' }
-  is_on: { type: bool, expr: 'surreal::expr("enabled")' }
-  rule_rollout: { type: int, expr: 'surreal::expr("default_rollout")' }
-  rule_allowlist: { type: string, expr: 'surreal::expr("default_allowlist")' }
+  flag_name: { type: string, flags: [title] }
+  env_key: { type: string }
+  enabled: { type: bool }
+  default_rollout: { type: int }
+  default_allowlist: { type: string }
+  revision: { type: int }
   default_label: { type: string, lazy: !include ../script/rule_label.rhai }
-  detail: { type: string, expr: 'surreal::expr("fn::env_detail(id)")' }
-  seen: { type: string, expr: 'surreal::expr("fn::env_seen(id)")' }
-  rule_revision: { type: int, expr: 'surreal::expr("revision")' }
+  last_seen: { type: string, flags: [hidden, calculated], references: { table: flag_last_seen, kind: has_one, name: last_seen } }
+  last_seen.last_seen_at: { type: timestamp }
+  # the same date under a plain name, for the web client
+  seen_at: { type: timestamp, lazy: 'row["last_seen.last_seen_at"]' }
 surreal:
   table: flag_env
