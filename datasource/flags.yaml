@@ -5,3 +5,30 @@ description: Feature flags, brands, rules, API tokens, users, usage metrics, set
 url: cbor://root:root@surrealdb:8000
 namespace: flags
 database: flags
+# Customer IDs are numbers separated by commas. Checked on every write, from the app, the
+# web API and data scripts alike.
+invariants:
+  default_allowlist:
+    script: |
+      table.before_save(|record, stored| {
+        let list = record.default_allowlist;
+        if list == () { return; }
+        for id in list.split(",") {
+          id.trim();
+          for c in id {
+            if c < '0' || c > '9' { throw `Customers always ON: "${id}" is not a number; use numbers separated by commas`; }
+          }
+        }
+      });
+  allowlist:
+    script: |
+      table.before_save(|record, stored| {
+        let list = record.allowlist;
+        if list == () { return; }
+        for id in list.split(",") {
+          id.trim();
+          for c in id {
+            if c < '0' || c > '9' { throw `Customers always ON: "${id}" is not a number; use numbers separated by commas`; }
+          }
+        }
+      });
