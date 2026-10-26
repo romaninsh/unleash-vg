@@ -153,6 +153,9 @@ DEFINE FIELD OVERWRITE environment       ON flag_env TYPE record<environment> AS
 DEFINE FIELD OVERWRITE env_key           ON flag_env TYPE string VALUE <string> record::id($this.environment);
 DEFINE FIELD OVERWRITE flag_name         ON flag_env TYPE string VALUE <string> record::id($this.flag);
 DEFINE INDEX OVERWRITE flag_env_name_env ON flag_env FIELDS flag_name, env_key;
+-- link to the service's last-seen record for this flag x environment (it may not exist yet)
+DEFINE FIELD OVERWRITE last_seen         ON flag_env TYPE record<flag_last_seen>
+    VALUE type::record('flag_last_seen', $this.flag_name + ':' + $this.env_key);
 DEFINE FIELD OVERWRITE enabled           ON flag_env TYPE bool DEFAULT false;
 DEFINE FIELD OVERWRITE default_rollout   ON flag_env TYPE int DEFAULT 100 ASSERT $value >= 0 AND $value <= 100;
 DEFINE FIELD OVERWRITE default_allowlist ON flag_env TYPE string DEFAULT ''
@@ -342,12 +345,7 @@ DEFINE FUNCTION OVERWRITE fn::rebuild_tags() {
     fn::count_tags(array::flatten(SELECT VALUE fn::list_items(tags) FROM flag WHERE archived != true), 1);
 };
 
--- Header and details line of an environment card on the flag page.
-DEFINE FUNCTION OVERWRITE fn::env_heading($fe: record<flag_env>) -> string {
-    RETURN string::uppercase(<string> record::id($fe.environment)) + '  ·  switch '
-        + IF $fe.enabled THEN 'ON' ELSE 'OFF (off for everyone)' END;
-};
-
+-- Details line of an environment card on the flag page.
 DEFINE FUNCTION OVERWRITE fn::env_detail($fe: record<flag_env>) -> string {
     LET $name = $fe.flag.name;
     LET $env = <string> record::id($fe.environment);

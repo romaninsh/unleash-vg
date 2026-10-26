@@ -12,7 +12,7 @@ columns:
   brand_name: { type: string, flags: [title] }
   rollout: { type: int }
   allowlist: { type: string }
-  rule_label: { type: string }
+  rule_label: { type: string, lazy: !include ../script/rule_label.rhai }
   brand_active: { type: bool }
 surreal:
   rhai: |
@@ -22,5 +22,4 @@ surreal:
         .expression(surreal::expr("brand.key").alias("brand_key"))
         .expression(surreal::expr("brand.display_name").alias("brand_name"))
         .expression(surreal::expr("brand.active").alias("brand_active"))
-        .expression(surreal::expr("fn::rule_label(rollout, allowlist)").alias("rule_label"))
         .where(surreal::ident("scope") != surreal::expr("NONE"))

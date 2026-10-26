@@ -10,9 +10,21 @@ columns:
   default_rollout: { label: Rollout %, type: int }
   default_allowlist: { label: Customers always ON, type: string }
   revision: { type: int, flags: [calculated] }
-  default_label: { label: Default rule, type: string, expr: 'surreal::expr("fn::rule_label(default_rollout, default_allowlist)")' }
-  heading: { type: string, expr: 'surreal::expr("fn::env_heading(id)")' }
-  detail: { type: string, expr: 'surreal::expr("fn::env_detail(id)")' }
-  seen: { type: string, expr: 'surreal::expr("fn::env_seen(id)")' }
+  default_label: { label: Default rule, type: string, lazy: !include ../script/rule_label.rhai }
+  # "Default rule: 10% + 2 customers · customers 1001,1002", for the read-only card
+  rule_text:
+    type: string
+    lazy: |
+      let list = row.default_allowlist;
+      "Default rule: " + row.default_label + if list == () || list == "" { "" } else { " · customers " + list }
+  heading:
+    type: string
+    lazy: |
+      let env = row.environment.sub_string(row.environment.index_of(":") + 1);
+      env.to_upper() + ": " + if row.enabled { "ON" } else { "OFF" }
+  last_seen: { type: string, flags: [hidden, calculated], references: { table: flag_last_seen, kind: has_one, name: last_seen } }
+  last_seen.last_seen_at: { label: Last seen, type: timestamp }
+  # the same date under a plain name, for templates
+  seen_at: { type: timestamp, flags: [hidden], lazy: 'row["last_seen.last_seen_at"]' }
 references:
   overrides: { table: brand_override, kind: has_many, foreign_key: flag_env }

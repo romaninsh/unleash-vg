@@ -16,7 +16,7 @@ columns:
   is_on: { type: bool, expr: 'surreal::expr("enabled")' }
   rule_rollout: { type: int, expr: 'surreal::expr("default_rollout")' }
   rule_allowlist: { type: string, expr: 'surreal::expr("default_allowlist")' }
-  default_label: { type: string, expr: 'surreal::expr("fn::rule_label(default_rollout, default_allowlist)")' }
+  default_label: { type: string, lazy: !include ../script/rule_label.rhai }
   detail: { type: string, expr: 'surreal::expr("fn::env_detail(id)")' }
   seen: { type: string, expr: 'surreal::expr("fn::env_seen(id)")' }
   rule_revision: { type: int, expr: 'surreal::expr("revision")' }

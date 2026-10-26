@@ -10,5 +10,5 @@ columns:
   brand.display_name: { label: Brand, type: string }
   rollout: { label: Rollout %, type: int }
   allowlist: { label: Customers always ON, type: string }
-  rule_label: { label: Rule, type: string, expr: 'surreal::expr("fn::rule_label(rollout, allowlist)")' }
+  rule_label: { label: Rule, type: string, lazy: !include ../script/rule_label.rhai }
   ready: { type: bool, flags: [hidden, calculated] }

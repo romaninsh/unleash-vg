@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# When SDKs last evaluated a flag in an environment; id = flag_last_seen:`<flag>:<environment>`.
+# Written by the SDK service.
+datasource: flags
+title: Flag last seen
+columns:
+  id: { type: string, flags: [id, hidden] }
+  flag: { label: Flag, type: string, flags: [title] }
+  environment: { type: string }
+  last_seen_at: { label: Last seen, type: timestamp }
