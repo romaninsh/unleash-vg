@@ -8,20 +8,19 @@
 /AGENTS.md
 
 # Machine-local, not content: the install record an app keeps so it
-# can update itself, the row caches, the credentials file, and the
-# local data files the connect wizard placed (CSV, SQLite).
+# can update itself, the row caches, the credentials files (`.env`
+# and each profile's, like `.env.prod`), and the local data files the
+# connect wizard placed (CSV, SQLite).
 manifest.yaml
 .cache/
 .env
+.env.*
 data/
 .DS_Store
 # --- end managed by Vantage
 
 # Skill copies Vantage installs and refreshes in every project it opens.
 .agents/
-
-# Per-profile env files (.env.prod, …) hold credentials too.
-.env.*
 
 # Generated sign-in list for the web app (tests/sync_web_users.sh).
 private/
