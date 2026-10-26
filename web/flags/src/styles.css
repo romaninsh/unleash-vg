@@ -84,6 +84,8 @@ label > input, label > textarea { display: block; width: 100%; margin-top: 2px; 
 .signin form { width: 340px; }
 .signin .primary { width: 100%; margin-top: 8px; padding: 7px; }
 .hint { font-size: 11px; color: var(--muted); margin-top: 12px; }
+.demo-users { display: grid; gap: 4px; margin-top: 4px; }
+.demo-users button { text-align: left; padding: 6px 8px; }
 
 .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .toolbar h2 { margin: 0 8px 0 0; }

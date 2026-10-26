@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useConnection } from "@vantage-ui/client/react";
 import { readToken, saveToken, useDb } from "./auth";
+import { DemoUsers, demoSignIn } from "./DemoUsers";
 
 /** Shows the sign-in form until the server accepts the token, then the app. */
 export function Gate({ children }: { children?: ReactNode }) {
@@ -45,6 +46,14 @@ function SignIn({ failed, detail }: { failed: boolean; detail?: string }) {
         )}
         <button type="submit" className="primary" disabled={busy}>{busy ? "Signing in…" : "Sign in"}</button>
         <p className="hint">Simulated sign-in for this preview: every staff account uses the password <b>demo</b>.</p>
+        {demoSignIn() && (
+          <DemoUsers
+            onPick={(pickedEmail, pickedPassword) => {
+              setEmail(pickedEmail);
+              setPassword(pickedPassword);
+            }}
+          />
+        )}
       </form>
     </div>
   );
