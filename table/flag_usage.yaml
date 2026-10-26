@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# One flag's SDK evaluations per environment, over the metrics still kept (Settings: metrics
+# retention). Pages pass the flag: scenery("flag_usage").args(#{ flag: args.name }).
+datasource: flags
+title: Flag evaluations
+id_column: environment
+columns:
+  environment: { label: Environment, type: string, flags: [id, title] }
+  # the environment as plain text for .where(): a filter on the id column compares to a record id
+  env: { type: string, flags: [hidden] }
+  yes: { label: On, type: int }
+  no: { label: Off, type: int }
+  share:
+    label: Served ON
+    type: string
+    lazy: |
+      let total = row.yes + row.no;
+      if total == 0 { "—" } else { `${row.yes * 100 / total}%` }
+surreal:
+  rhai: |
+    let flag = args.get("flag") ?? "";
+    surreal::select().from("metric_hourly")
+        .field("environment")
+        .expression(surreal::ident("environment").alias("env"))
+        .expression(surreal::sum(surreal::ident("yes")).alias("yes"))
+        .expression(surreal::sum(surreal::ident("no")).alias("no"))
+        .where(surreal::ident("flag") == flag)
+        .group_by(surreal::ident("environment"))

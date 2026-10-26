@@ -16,30 +16,98 @@ body:
         when: 'record.archived == "true"'
         params: { text: "Archived - invisible to apps", icon: Archive }
   - kind: row
+    align: start
     children:
       - kind: column
-        frame: true
         children:
-          - kind: select
-            name: env
-            appearance: chips
-            params: { options: [development, uat, production], default: production }
-          - kind: view
-            src: env_card
-            args: { flag: "${args.name}", env: "${env.value}" }
+          - kind: column
+            frame: true
+            children:
+              - kind: row
+                justify: between
+                children:
+                  - kind: select
+                    name: env
+                    appearance: chips
+                    align: start
+                    width: 300
+                    params: { options: [development, uat, production], default: production }
+                  - kind: row
+                    width: 180
+                    children:
+                      - kind: button
+                        name: edit_rule
+                        params:
+                          label: Edit
+                          icon: Pencil
+                          size: xs
+                          action: |
+                            try { actions.edit_env_rule(#{ flag: args.name, env: env.value }); }
+                            catch (e) { toast(`${e}`, "error"); }
+                      - kind: button
+                        name: rules_help
+                        params: { label: Help, icon: CircleHelp, size: xs, action: 'open_in("sheet", "help_rules")' }
+              - kind: view
+                src: env_card
+                args: { flag: "${args.name}", env: "${env.value}" }
+          # Brand overrides of the environment picked above. Add stamps the scope, and the
+          # database links the override to that flag environment.
+          - kind: column
+            frame: true
+            children:
+              - kind: label
+                params: { text: "Brand overrides", style: heading, icon: Building2 }
+              - kind: crud
+                name: overrides
+                observe: { script: 'scenery("brand_override").where("scope", args.name + "@" + env.value)' }
+                height: 200
+                params:
+                  form: brand_override
+                  columns:
+                    brand.display_name: { label: Brand, width: 180 }
+                    rule_label: { label: Rule, width: 170, color: { success: [ON], muted: [OFF], blue: ["*%*"], yellow: ["Only*"] } }
+                    allowlist: { label: Customers }
+                  row_actions:
+                    - label: Edit
+                      icon: Pencil
+                      triggers: { double_click: true }
+                      action: |
+                        let r = actions.edit_override(row);
+                        r.remove("brand.display_name");
+                        if !("allowlist" in r) { r.allowlist = ""; }
+                        row.set(r);
+                        row.flash();
       - kind: column
         width: 340
-        frame: true
         children:
-          - kind: label
-            params: { text: "About this flag", style: heading }
-          - kind: form
-            observe: flag
-            record: "flag:${args.name}"
-            params:
-              fields: [description, tags, stale, archived]
-          - kind: label
-            params: { text: "Created ${date_relative(record.created_at)} by ${record.created_by}" }
+          - kind: column
+            frame: true
+            children:
+              - kind: label
+                params: { text: "Live", style: heading, icon: Activity }
+              - kind: label
+                params: { text: '${ if record.last_seen == "" { "Never seen by apps" } else { "Last seen " + date_relative(record.last_seen) } }' }
+              - kind: row
+                children:
+                  - kind: stat
+                    observe: { script: 'scenery("flag_usage").args(#{ flag: args.name }).where("env", "development")' }
+                    params: { label: development, column: share }
+                  - kind: stat
+                    observe: { script: 'scenery("flag_usage").args(#{ flag: args.name }).where("env", "uat")' }
+                    params: { label: uat, column: share }
+                  - kind: stat
+                    observe: { script: 'scenery("flag_usage").args(#{ flag: args.name }).where("env", "production")' }
+                    params: { label: production, column: share }
+          - kind: column
+            frame: true
+            children:
+              - kind: label
+                params: { text: "About this flag", style: heading }
+              - kind: form
+                observe: flag
+                record: "flag:${args.name}"
+                params:
+                  fields: [description, tags, stale, archived]
   - kind: label
     params: { text: "History", style: heading, icon: ClipboardList }
   - kind: grid

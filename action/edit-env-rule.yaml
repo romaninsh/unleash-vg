@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=./action-schema-1.json
+# Edit one flag environment's rule in a dialog: actions.edit_env_rule(#{ flag, env }).
+# A refused save (customer IDs that aren't numbers) throws back to the caller.
+kind: script
+body: |
+  let id = "flag_env:" + args.flag + "@" + args.env;
+  let rec = table("flag_env_edit").get(id);
+  let r = actions.env_rule_form(rec);
+  // An emptied optional field is left out of the answer; write it as cleared.
+  if !("default_allowlist" in r) { r.default_allowlist = ""; }
+  if !("enabled" in r) { r.enabled = false; }
+  table("flag_env_edit").patch(id, r);

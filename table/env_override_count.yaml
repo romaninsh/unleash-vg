@@ -1,0 +1,20 @@
+# yaml-language-server: $schema=./table-schema-1.json
+# How many brand overrides one flag environment has. Pages pass the scope:
+# scenery("env_override_count").args(#{ scope: "<flag>@<environment>" }). No overrides = no row.
+datasource: flags
+title: Brand overrides per flag environment
+id_column: scope
+columns:
+  scope: { type: string, flags: [id] }
+  overrides: { type: int }
+  summary:
+    type: string
+    lazy: 'if row.overrides == 1 { "1 brand override" } else { `${row.overrides} brand overrides` }'
+surreal:
+  rhai: |
+    let scope = args.get("scope") ?? "";
+    surreal::select().from("brand_override")
+        .field("scope")
+        .expression(surreal::count().alias("overrides"))
+        .where(surreal::ident("scope") == scope)
+        .group_by(surreal::ident("scope"))

@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=./action-schema-1.json
+# Edit a brand override's rule (the Brand overrides box, right-click → Edit). The brand of an
+# override can't change: delete it and add one for the other brand.
+kind: form
+dialog:
+  title: "Edit override: ${row.brand.display_name}"
+  confirm_label: Save
+form:
+  table: brand_override
+  fields:
+    - { name: brand.display_name, type: string, label: Brand, readonly: true, required: false }
+    - { name: rollout, label: Rollout %, required: false, placeholder: "0–100" }
+    - { name: allowlist, label: Customers always ON, required: false, placeholder: "e.g. 1001, 1002" }

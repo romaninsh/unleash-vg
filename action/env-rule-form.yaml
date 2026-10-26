@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=./action-schema-1.json
+# The dialog behind the flag page's Edit button: the switch and default rule of one environment.
+kind: form
+dialog:
+  title: Edit rule
+  description: "Off switches the flag off for everyone in this environment. Rollout 0 is OFF, 100 is ON, 1–99 is that share of customers."
+  confirm_label: Save
+form:
+  table: flag_env_edit
+  fields:
+    - { name: enabled, label: Switch on, required: false }
+    - { name: default_rollout, label: Rollout %, placeholder: "0–100" }
+    - { name: default_allowlist, label: Customers always ON, required: false, placeholder: "e.g. 1001, 1002" }

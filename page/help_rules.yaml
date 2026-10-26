@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=./page-schema-1.json
+# How a flag's rules work in one environment. Opened from the flag page's Help button.
+title: How rules work
+body:
+  - kind: markdown
+    text: |
+      **Switch** — off means the flag is off for everyone in this environment,
+      whatever the rules say.
+
+      **Default rule** — applies to every brand without an override. Rollout 0 is OFF,
+      100 is ON, and 1–99 turns the flag on for that share of customers.
+
+      **Customers always ON** — customer IDs separated by commas or spaces. They get
+      the flag even at rollout 0.
+
+      **Brand overrides** — replace the default rule for one brand. Add one by picking
+      the brand; leave Rollout empty to start from a copy of the default rule.
