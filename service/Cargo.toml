@@ -1,0 +1,31 @@
+[package]
+name = "flag-service"
+version = "0.1.0"
+edition = "2024"
+description = "Unleash-compatible SDK API (spec 04) over the Flag Service SurrealDB database"
+publish = false
+
+[dependencies]
+# Vantage framework (github.com/romaninsh/vantage), pinned: data access to SurrealDB.
+vantage-surrealdb = { git = "https://github.com/romaninsh/vantage", rev = "27ad2f38325d384f01cf608e0a6df2b94522d054" }
+surreal-client = { git = "https://github.com/romaninsh/vantage", rev = "27ad2f38325d384f01cf608e0a6df2b94522d054" }
+vantage-expressions = { git = "https://github.com/romaninsh/vantage", rev = "27ad2f38325d384f01cf608e0a6df2b94522d054" }
+vantage-core = { git = "https://github.com/romaninsh/vantage", rev = "27ad2f38325d384f01cf608e0a6df2b94522d054" }
+
+# Official Unleash evaluation engine (MIT) for the Frontend API (spec 03, server-side evaluation).
+unleash-yggdrasil = "0.21.6"
+unleash-types = "0.16.2"   # the version unleash-yggdrasil 0.21.6 uses
+
+axum = "0.8"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6", features = ["cors", "limit", "set-header"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+argon2 = "0.5"
+sha2 = "0.10"
+hex = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
