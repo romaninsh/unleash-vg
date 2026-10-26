@@ -8,6 +8,21 @@ on, off or a percentage, with customer allowlists and per-brand overrides.
 It was built by Claude Opus 5.5 with [Vantage](https://vantage-ui.com) and is shared under the MIT
 licence, for anyone who needs a free alternative to Unleash or a similar service.
 
+## The admin app
+
+Every flag with its state in each environment, brand overrides and when apps last asked for it:
+
+![Flags](docs/screenshots/flags.png)
+
+One flag: the rule per environment, brand overrides, the share of evaluations served ON, and its
+history:
+
+![A flag](docs/screenshots/flag.png)
+
+API tokens per environment, created here or imported from an existing Unleash:
+
+![API tokens](docs/screenshots/api-tokens.png)
+
 ## What's in the repository
 
 | Folder | What it is |
