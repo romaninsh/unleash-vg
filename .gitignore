@@ -1,0 +1,37 @@
+# --- managed by Vantage: generated files (do not edit this block)
+#
+# Vantage rewrites these on every open, from the running build.
+# Commit them and they go stale, and every version bump becomes a
+# diff nobody wrote.
+*/*-schema-*.json
+*/README.md
+/AGENTS.md
+
+# Machine-local, not content: the install record an app keeps so it
+# can update itself, the row caches, the credentials file, and the
+# local data files the connect wizard placed (CSV, SQLite).
+manifest.yaml
+.cache/
+.env
+data/
+.DS_Store
+# --- end managed by Vantage
+
+# Per-profile env files (.env.prod, …) hold credentials too.
+.env.*
+
+# Generated sign-in list for the web app (tests/sync_web_users.sh).
+private/
+
+# Build output.
+service/target/
+node_modules/
+dist/
+test-results/
+
+# Folder READMEs are Vantage's (above), except the bench's own.
+!testbench/README.md
+
+# The bench's local config (targets and token secrets) and its data.
+testbench/testbench.config.json
+testbench/.data/
