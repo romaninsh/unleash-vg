@@ -249,7 +249,6 @@ DEFINE FIELD OVERWRITE must_change_password  ON app_user TYPE bool DEFAULT true
 DEFINE FIELD OVERWRITE password_changed_at   ON app_user TYPE option<datetime>;
 DEFINE FIELD OVERWRITE admin_scope           ON app_user TYPE string VALUE 'all';
 DEFINE FIELD OVERWRITE last_login_at         ON app_user TYPE option<datetime>;
-DEFINE FIELD OVERWRITE updated_by            ON app_user TYPE option<string>;
 DEFINE FIELD OVERWRITE created_at            ON app_user TYPE datetime DEFAULT time::now();
 DEFINE INDEX OVERWRITE app_user_email ON app_user FIELDS email UNIQUE;
 

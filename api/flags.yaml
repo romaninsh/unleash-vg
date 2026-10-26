@@ -138,7 +138,7 @@ entities:
   - name: user_admin
     observe: web_user_admin
     params:
-      columns: [name, email, role, editable_environments, active, must_change_password, new_password, admin_scope, last_login_at, password_changed_at, updated_by]
+      columns: [name, email, role, editable_environments, active, must_change_password, new_password, admin_scope, last_login_at, password_changed_at]
       default_sort: name
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: settings_admin

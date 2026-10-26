@@ -225,8 +225,8 @@ DEFINE EVENT OVERWRITE api_token_changes ON TABLE api_token WHEN $event != 'DELE
 
 -- ---------------------------------------------------------------- users
 
+-- User changes are audited by Vantage (table/app_user.yaml log_changes:); this keeps the rules.
 DEFINE EVENT OVERWRITE app_user_changes ON TABLE app_user THEN {
-    LET $by = $after.updated_by ?? $before.updated_by ?? 'admin';
     -- There must always be an active admin (spec 07): no demoting, deactivating or deleting the last.
     IF ($event = 'UPDATE' AND $before.role = 'admin' AND $before.active AND ($after.role != 'admin' OR !$after.active))
        OR ($event = 'DELETE' AND $before.role = 'admin' AND $before.active) {
@@ -234,30 +234,13 @@ DEFINE EVENT OVERWRITE app_user_changes ON TABLE app_user THEN {
             THROW 'At least one active admin is required';
         };
     };
-    -- a temporary password is never kept: only its hash; the person marker is cleared once logged
-    IF $event != 'DELETE' AND ($after.new_password != NONE OR $after.updated_by != NONE) {
-        UPDATE $after.id SET new_password = NONE, updated_by = NONE;
+    -- a temporary password is never kept: only its hash
+    IF $event != 'DELETE' AND $after.new_password != NONE {
+        UPDATE $after.id SET new_password = NONE;
     };
     -- when the password last changed (new user with a password, reset, or a change by the user)
     IF $event != 'DELETE' AND $after.password_hash != NONE AND ($event = 'CREATE' OR $before.password_hash != $after.password_hash) {
         UPDATE $after.id SET password_changed_at = time::now();
-    };
-    IF $event = 'CREATE' {
-        fn::audit($by, 'user-created', NONE, NONE, NONE, 'User ' + $after.email + ' created as ' + $after.role, NONE,
-            $after.{name, email, role, editable_environments});
-    } ELSE IF $event = 'UPDATE' {
-        IF $before.active AND !$after.active {
-            fn::audit($by, 'user-deactivated', NONE, NONE, NONE, 'User ' + $after.email + ' deactivated', NONE, NONE);
-        };
-        IF $before.password_hash != $after.password_hash {
-            fn::audit($by, 'user-password-reset', NONE, NONE, NONE, 'Password reset for ' + $after.email, NONE, NONE);
-        };
-        IF $before.name != $after.name OR $before.email != $after.email OR $before.role != $after.role
-           OR $before.editable_environments != $after.editable_environments OR ($after.active AND !$before.active) {
-            fn::audit($by, 'user-updated', NONE, NONE, NONE, 'User ' + $after.email + ' updated',
-                $before.{name, email, role, editable_environments, active},
-                $after.{name, email, role, editable_environments, active});
-        };
     };
 };
 

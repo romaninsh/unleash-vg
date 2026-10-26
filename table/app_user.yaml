@@ -13,3 +13,8 @@ columns:
   last_login_at: { label: Last login, type: timestamp, flags: [calculated], time_precision: minutes }
   password_changed_at: { label: Password changed, type: timestamp, flags: [calculated], time_precision: minutes }
   created_at: { label: Created, type: timestamp, flags: [calculated], time_precision: minutes }
+log_changes:
+  into: audit_event
+  exclude: [password_hash]
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_user.rhai

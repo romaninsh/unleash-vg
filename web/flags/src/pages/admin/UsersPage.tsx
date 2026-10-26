@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { observer, useCollection } from "@vantage-ui/client/react";
-import { useDb, usePermissions } from "../../auth";
+import { useDb } from "../../auth";
 import { ENVIRONMENTS, friendlyError, relTime, temporaryPassword } from "../../format";
 import { ShowOnce } from "../../components/ShowOnce";
 import type { UserAdmin } from "../../vantage.gen";
@@ -19,7 +19,6 @@ export const UsersPage = observer(() => {
   const [envs, setEnvs] = useState<string[]>([]);
   const [shown, setShown] = useState<{ who: string; pwd: string } | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  const by = usePermissions().email;
 
   async function add(e: FormEvent) {
     e.preventDefault();
@@ -27,7 +26,7 @@ export const UsersPage = observer(() => {
     const pwd = temporaryPassword();
     const r = await db.user_admin.create({
       name, email: email.trim().toLowerCase(), role, editable_environments: role === "editor" ? envs.join(",") : "",
-      active: true, new_password: pwd, admin_scope: "all", updated_by: by,
+      active: true, new_password: pwd, admin_scope: "all",
     });
     if (!r.ok) return setFormError(/already|contains/i.test(r.error.message) ? `A user with email ${email} already exists.` : r.error.message);
     setShown({ who: email, pwd });
@@ -81,10 +80,9 @@ const UserRow = observer(({ u, onPassword }: { u: UserAdmin; onPassword: (pwd: s
   const curRole = role ?? u.role ?? "viewer";
   const curEnvs = envs ?? (u.editable_environments ?? "").split(",").filter(Boolean);
   const dirty = role !== null || envs !== null;
-  const by = usePermissions().email;
   const patch = async (fields: Parameters<UserAdmin["patch"]>[0]) => {
     setError(null);
-    const r = await u.patch({ ...fields, updated_by: by });
+    const r = await u.patch(fields);
     if (!r.ok) setError(friendlyError(r.error.message));
     return r.ok;
   };

@@ -13,8 +13,12 @@ columns:
   must_change_password: { type: bool }
   new_password: { type: string }
   admin_scope: { type: string }
-  updated_by: { type: string }
   last_login_at: { type: timestamp, flags: [calculated] }
   password_changed_at: { type: timestamp, flags: [calculated] }
 surreal:
   table: app_user
+log_changes:
+  into: audit_event
+  exclude: [password_hash]   # new_password: log_user.rhai never writes it, see there
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_user.rhai
