@@ -10,12 +10,14 @@
 # Machine-local, not content: the install record an app keeps so it
 # can update itself, the row caches, the credentials files (`.env`
 # and each profile's, like `.env.prod`), and the local data files the
-# connect wizard placed (CSV, SQLite).
+# connect wizard placed (CSV, SQLite), and third-party reference
+# material copied in for the agent (`refs/`).
 manifest.yaml
 .cache/
 .env
 .env.*
 data/
+/refs/
 .DS_Store
 # --- end managed by Vantage
 
