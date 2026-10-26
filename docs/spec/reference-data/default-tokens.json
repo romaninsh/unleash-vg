@@ -1,0 +1,11 @@
+{
+  "note": "Default SDK tokens for LOCAL DEVELOPMENT ONLY. Every implementation provides these when run locally, so the shared test bench works against it without setup. They must never exist in a production deployment. See spec 04, 'Default tokens for local development'.",
+  "tokens": [
+    { "name": "default backend (development)", "type": "backend", "environment": "development", "secret": "default:development.testbenchbackend0000000000000000000000000000000000000000" },
+    { "name": "default frontend (development)", "type": "frontend", "environment": "development", "secret": "default:development.testbenchfrontend000000000000000000000000000000000000000" },
+    { "name": "default backend (uat)", "type": "backend", "environment": "uat", "secret": "default:uat.testbenchbackend0000000000000000000000000000000000000000" },
+    { "name": "default frontend (uat)", "type": "frontend", "environment": "uat", "secret": "default:uat.testbenchfrontend000000000000000000000000000000000000000" },
+    { "name": "default backend (production)", "type": "backend", "environment": "production", "secret": "default:production.testbenchbackend0000000000000000000000000000000000000000" },
+    { "name": "default frontend (production)", "type": "frontend", "environment": "production", "secret": "default:production.testbenchfrontend000000000000000000000000000000000000000" }
+  ]
+}

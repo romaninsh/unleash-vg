@@ -1,0 +1,948 @@
+{
+  "source": "unleash-vg demo data (tests/seed.surql)",
+  "exportedAt": "2026-10-17T13:26:36.082Z",
+  "note": "Brands and flags only. Rules use the spec 02 model: switch + default rule + brand overrides; rollout 0-100, allowlist = customer IDs. `group` is the app section the flag belongs to (shared list: testbench/web/flag-groups.ts).",
+  "brands": [
+    {
+      "key": "bank-a",
+      "displayName": "Northwind Air",
+      "active": true
+    },
+    {
+      "key": "bank-b",
+      "displayName": "Harbour Bank",
+      "active": true
+    },
+    {
+      "key": "bank-c",
+      "displayName": "Greenfield Stores",
+      "active": true
+    },
+    {
+      "key": "bank-d",
+      "displayName": "Contoso Air (prospect)",
+      "active": true
+    },
+    {
+      "key": "bank-e",
+      "displayName": "Parcelpoint (prospect)",
+      "active": true
+    },
+    {
+      "key": "bank-f",
+      "displayName": "Roadside Club (prospect)",
+      "active": false
+    }
+  ],
+  "flags": [
+    {
+      "name": "beta-budget-planner",
+      "group": "Insights",
+      "description": null,
+      "tags": [
+        "insights",
+        "pilot"
+      ],
+      "stale": false,
+      "archived": true,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": false,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "biometric-login",
+      "group": "Sign in",
+      "description": "Face ID / fingerprint login on mobile.",
+      "tags": [
+        "auth",
+        "mobile"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "card-freeze",
+      "group": "Cards",
+      "description": "Temporarily freeze a card from the app.",
+      "tags": [
+        "team:cards"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 20,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "chat-support",
+      "group": "App",
+      "description": "In-app chat with the support team.",
+      "tags": [
+        "support"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {
+            "bank-d": {
+              "rollout": 100,
+              "allowlist": []
+            }
+          }
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "crypto-wallet",
+      "group": "Products",
+      "description": "Pilot: hold and view crypto balances.",
+      "tags": [
+        "pilot"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 0,
+            "allowlist": [
+              "2001",
+              "2002",
+              "2003",
+              "2004",
+              "2005"
+            ]
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": false,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "dark-mode",
+      "group": "App",
+      "description": "Dark theme in the web and mobile apps.",
+      "tags": [
+        "ui"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "debit-card-payments",
+      "group": "Cards",
+      "description": "Pay with a linked debit card from the payments screen.",
+      "tags": [
+        "payments",
+        "team:cards"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {
+            "bank-b": {
+              "rollout": 0,
+              "allowlist": []
+            },
+            "bank-c": {
+              "rollout": 10,
+              "allowlist": [
+                "1001",
+                "1002"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "direct-debit-manager",
+      "group": "Payments",
+      "description": "View and cancel direct debits in the app.",
+      "tags": [
+        "payments"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "instant-transfers",
+      "group": "Payments",
+      "description": "Faster Payments for transfers under the instant limit.",
+      "tags": [
+        "payments"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "legacy-transfer-screen",
+      "group": "Payments",
+      "description": "Old transfer screen, kept as fallback.",
+      "tags": [
+        "payments"
+      ],
+      "stale": true,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 0,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "loan-calculator",
+      "group": "Products",
+      "description": "Personal loan calculator on the products page.",
+      "tags": [
+        "lending"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "new-onboarding-flow",
+      "group": "Onboarding",
+      "description": "Redesigned sign-up journey with ID scan.",
+      "tags": [
+        "onboarding",
+        "mobile"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 50,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 25,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "open-banking-aggregation",
+      "group": "Accounts",
+      "description": "Show accounts held at other banks.",
+      "tags": [
+        "open-banking"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 0,
+            "allowlist": []
+          },
+          "overrides": {
+            "bank-a": {
+              "rollout": 100,
+              "allowlist": []
+            },
+            "bank-c": {
+              "rollout": 100,
+              "allowlist": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "overdraft-alerts",
+      "group": "Notifications",
+      "description": "Warn customers before they go into overdraft.",
+      "tags": [
+        "notifications"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "payee-confirmation",
+      "group": "Payments",
+      "description": "Confirmation of Payee name check.",
+      "tags": [
+        "payments",
+        "compliance"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "push-notifications-v2",
+      "group": "Notifications",
+      "description": "New notification service with per-category settings.",
+      "tags": [
+        "mobile",
+        "notifications"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 10,
+            "allowlist": [
+              "3001",
+              "3002"
+            ]
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "round-up-savings",
+      "group": "Savings",
+      "description": "Round card payments up into a savings pot.",
+      "tags": [
+        "savings",
+        "team:cards"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {
+            "bank-a": {
+              "rollout": 0,
+              "allowlist": [
+                "4001",
+                "4002",
+                "4003"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "savings-pots",
+      "group": "Savings",
+      "description": "Let customers split savings into named pots.",
+      "tags": [
+        "savings"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "spending-insights",
+      "group": "Insights",
+      "description": "Monthly spending breakdown by category.",
+      "tags": [
+        "insights"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "sso-login",
+      "group": "Sign in",
+      "description": "Sign in with the bank's own identity provider.",
+      "tags": [
+        "auth"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 0,
+            "allowlist": []
+          },
+          "overrides": {
+            "bank-a": {
+              "rollout": 100,
+              "allowlist": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "statement-pdf-v2",
+      "group": "Documents",
+      "description": "New PDF statement layout.",
+      "tags": [
+        "documents"
+      ],
+      "stale": true,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": false,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "test",
+      "group": "Other",
+      "description": "description",
+      "tags": [
+        "test"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": false,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": false,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "production": {
+          "enabled": false,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        }
+      }
+    },
+    {
+      "name": "virtual-cards",
+      "group": "Cards",
+      "description": "Issue single-use virtual cards.",
+      "tags": [
+        "team:cards",
+        "payments"
+      ],
+      "stale": false,
+      "archived": false,
+      "environments": {
+        "development": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {}
+        },
+        "uat": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {
+            "bank-b": {
+              "rollout": 0,
+              "allowlist": []
+            }
+          }
+        },
+        "production": {
+          "enabled": true,
+          "default": {
+            "rollout": 100,
+            "allowlist": []
+          },
+          "overrides": {
+            "bank-b": {
+              "rollout": 0,
+              "allowlist": []
+            }
+          }
+        }
+      }
+    }
+  ],
+  "groups": [
+    "App",
+    "Sign in",
+    "Onboarding",
+    "Accounts",
+    "Cards",
+    "Payments",
+    "Savings",
+    "Insights",
+    "Products",
+    "Documents",
+    "Notifications",
+    "Other"
+  ]
+}
