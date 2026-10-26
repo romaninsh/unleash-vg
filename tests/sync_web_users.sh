@@ -9,6 +9,7 @@
 # Inactive users get no entry, so they can't sign in.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+mkdir -p private
 
 echo "SELECT email, role, editable_environments FROM app_user WHERE active = true ORDER BY email;" \
   | tests/surql.sh - -f \
