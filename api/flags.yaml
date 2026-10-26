@@ -126,7 +126,7 @@ entities:
   - name: brand_admin
     observe: web_brand_admin
     params:
-      columns: [key, display_name, active, admin_scope, created_at, updated_by]
+      columns: [key, display_name, active, admin_scope, created_at]
       default_sort: key
     api: { scope: { admin_scope: { in: $principal.admin } } }
   - name: token_admin

@@ -8,7 +8,10 @@ columns:
   display_name: { type: string, flags: [title] }
   active: { type: bool }
   admin_scope: { type: string }
-  updated_by: { type: string }
   created_at: { type: timestamp, flags: [calculated] }
 surreal:
   table: brand
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_brand.rhai

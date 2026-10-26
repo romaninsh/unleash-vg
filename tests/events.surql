@@ -23,32 +23,10 @@ DEFINE EVENT OVERWRITE audit_immutable ON TABLE audit_event WHEN $event IN ['UPD
 
 -- ---------------------------------------------------------------- brands
 
-DEFINE EVENT OVERWRITE brand_changes ON TABLE brand THEN {
-    LET $by = $after.updated_by ?? $before.updated_by ?? $after.created_by ?? 'admin';
-    -- keep a marker set on its own (the web app marks a brand just before deleting it)
-    IF $event != 'DELETE' AND $after.updated_by != NONE
-       AND ($event = 'CREATE' OR $before.display_name != $after.display_name OR $before.active != $after.active) {
-        UPDATE $after.id SET updated_by = NONE;
-    };
-    IF $event = 'CREATE' {
-        fn::audit($by, 'brand-created', NONE, NONE, $after.key,
-            'Brand ' + $after.display_name + ' (' + $after.key + ') added', NONE,
-            { key: $after.key, displayName: $after.display_name, active: $after.active });
-    } ELSE IF $event = 'UPDATE' AND ($before.display_name != $after.display_name OR $before.active != $after.active) {
-        fn::audit($by, 'brand-updated', NONE, NONE, $after.key,
-            'Brand ' + $after.key + ': '
-              + IF $before.display_name != $after.display_name THEN 'renamed "' + $before.display_name + '" -> "' + $after.display_name + '"' ELSE '' END
-              + IF $before.display_name != $after.display_name AND $before.active != $after.active THEN ', ' ELSE '' END
-              + IF $before.active != $after.active THEN IF $after.active THEN 'activated' ELSE 'deactivated' END ELSE '' END,
-            { displayName: $before.display_name, active: $before.active },
-            { displayName: $after.display_name, active: $after.active });
-    } ELSE IF $event = 'DELETE' {
-        IF count(SELECT id FROM brand_override WHERE brand = $before.id) > 0 {
-            THROW 'This brand still has overrides - deactivate it instead';
-        };
-        fn::audit($by, 'brand-deleted', NONE, NONE, $before.key,
-            'Brand ' + $before.display_name + ' (' + $before.key + ') deleted',
-            { key: $before.key, displayName: $before.display_name }, NONE);
+-- Brand changes are audited by Vantage (table/brand.yaml log_changes:); this keeps the rule.
+DEFINE EVENT OVERWRITE brand_changes ON TABLE brand WHEN $event = 'DELETE' THEN {
+    IF count(SELECT id FROM brand_override WHERE brand = $before.id) > 0 {
+        THROW 'This brand still has overrides - deactivate it instead';
     };
 };
 

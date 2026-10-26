@@ -10,3 +10,7 @@ columns:
   created_by: { label: Created by, type: string, flags: [calculated] }
 references:
   overrides: { table: brand_override, kind: has_many, foreign_key: brand }
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_brand.rhai

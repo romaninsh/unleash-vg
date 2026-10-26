@@ -114,9 +114,6 @@ check "web origins are tidied: one per line, no trailing slash, no repeats" '"ht
         RETURN settings:main.frontend_cors_origins;")"
 check "settings changes are logged under the person" '"ann@example.com"' \
   "$(Q "RETURN (SELECT VALUE created_by FROM audit_event WHERE type = 'settings-updated' ORDER BY created_at DESC LIMIT 1)[0];")"
-check "brand changes are logged under the person" '["ann@example.com",null]' \
-  "$(Q "UPDATE brand:\`bank-d\` SET display_name = 'Contoso Air', updated_by = 'ann@example.com';
-        RETURN [(SELECT VALUE created_by FROM audit_event WHERE type = 'brand-updated' AND brand = 'bank-d' ORDER BY created_at DESC)[0], brand:\`bank-d\`.updated_by];")"
 check "tags in use are counted on live flags only" '[1,1,0]' \
   "$(Q "CREATE flag:tg1 SET name = 'tg1', tags = 'zz-one,zz-two';
         LET \$a = known_tag:\`zz-one\`.flags; LET \$b = known_tag:\`zz-two\`.flags;

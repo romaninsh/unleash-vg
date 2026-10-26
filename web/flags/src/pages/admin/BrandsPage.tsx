@@ -1,13 +1,12 @@
 import { useState, type FormEvent } from "react";
 import { observer, useCollection } from "@vantage-ui/client/react";
-import { useDb, usePermissions } from "../../auth";
+import { useDb } from "../../auth";
 import { friendlyError } from "../../format";
 import type { BrandAdmin } from "../../vantage.gen";
 
 /** Brands (spec 05 screen 7, admins): add, rename, activate/deactivate, delete when unused. */
 export const BrandsPage = observer(() => {
   const db = useDb();
-  const { email } = usePermissions();
   const { items, error } = useCollection(db.brand_admin.sort("key", "asc"));
   // overrides per brand key (one per flag environment)
   const overrides = new Map<string, number>();
@@ -20,7 +19,7 @@ export const BrandsPage = observer(() => {
   async function add(e: FormEvent) {
     e.preventDefault();
     setAddError(null);
-    const r = await db.brand_admin.create({ id: key, key, display_name: name.trim(), active: true, admin_scope: "all", updated_by: email });
+    const r = await db.brand_admin.create({ id: key, key, display_name: name.trim(), active: true, admin_scope: "all" });
     if (!r.ok) return setAddError(/already|exists|contains/i.test(r.error.message) ? `A brand with key ${key} already exists.` : friendlyError(r.error.message));
     setKey("");
     setName("");
@@ -37,7 +36,7 @@ export const BrandsPage = observer(() => {
       {error && <p role="alert" className="error">{error}</p>}
       <table className="grid">
         <thead><tr><th>Key</th><th>Name</th><th>Active</th><th>Flags with overrides</th><th /></tr></thead>
-        <tbody>{items.map((b) => <BrandRow key={b.id} b={b} overrides={overrides.get(b.key ?? "") ?? 0} by={email} />)}</tbody>
+        <tbody>{items.map((b) => <BrandRow key={b.id} b={b} overrides={overrides.get(b.key ?? "") ?? 0} />)}</tbody>
       </table>
       <form className="card addform" onSubmit={add}>
         <h3>Add brand</h3>
@@ -53,7 +52,7 @@ export const BrandsPage = observer(() => {
   );
 });
 
-const BrandRow = observer(({ b, overrides, by }: { b: BrandAdmin; overrides: number; by: string }) => {
+const BrandRow = observer(({ b, overrides }: { b: BrandAdmin; overrides: number }) => {
   const [name, setName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const run = async (p: Promise<{ ok: boolean; error?: { message: string } }>) => {
@@ -64,7 +63,7 @@ const BrandRow = observer(({ b, overrides, by }: { b: BrandAdmin; overrides: num
   };
   const rename = async () => {
     if (name === null || !name.trim() || name === b.display_name) return setName(null);
-    if (await run(b.patch({ display_name: name.trim(), updated_by: by }))) setName(null);
+    if (await run(b.patch({ display_name: name.trim() }))) setName(null);
   };
   const used = overrides > 0;
   return (
@@ -84,7 +83,7 @@ const BrandRow = observer(({ b, overrides, by }: { b: BrandAdmin; overrides: num
       </td>
       <td>
         <label className="chip">
-          <input type="checkbox" checked={!!b.active} onChange={(e) => void run(b.patch({ active: e.target.checked, updated_by: by }))} /> {b.active ? "active" : "inactive"}
+          <input type="checkbox" checked={!!b.active} onChange={(e) => void run(b.patch({ active: e.target.checked }))} /> {b.active ? "active" : "inactive"}
         </label>
       </td>
       <td>{overrides}</td>
@@ -95,8 +94,7 @@ const BrandRow = observer(({ b, overrides, by }: { b: BrandAdmin; overrides: num
           title={used ? "Has overrides - deactivate it instead" : ""}
           onClick={async () => {
             if (!confirm(`Delete brand ${b.key}?\nApps that still send "${b.key}" will get the default rule.`)) return;
-            // so the history names who deleted it
-            if (await run(b.patch({ updated_by: by }))) await run(b.delete());
+            await run(b.delete());
           }}
         >
           Delete

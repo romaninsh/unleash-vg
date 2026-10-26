@@ -96,7 +96,6 @@ DEFINE FIELD OVERWRITE display_name ON brand TYPE string ASSERT string::len(stri
 DEFINE FIELD OVERWRITE active       ON brand TYPE bool DEFAULT true;
 DEFINE FIELD OVERWRITE created_at   ON brand TYPE datetime DEFAULT time::now();
 DEFINE FIELD OVERWRITE created_by   ON brand TYPE string DEFAULT 'admin';
-DEFINE FIELD OVERWRITE updated_by   ON brand TYPE option<string>;
 DEFINE INDEX OVERWRITE brand_key ON brand FIELDS key UNIQUE;
 -- Constant the web API scopes admin screens on: admins get ['all'] (also on api_token, app_user, settings).
 DEFINE FIELD OVERWRITE admin_scope  ON brand TYPE string VALUE 'all';
