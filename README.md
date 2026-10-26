@@ -41,16 +41,22 @@ Data lives in SurrealDB.
 
 You need Docker, Node 22 or later, and [Vantage](https://vantage-ui.com) (nightly).
 
-1. Open this folder in Vantage. It starts SurrealDB and the SDK API from `composer.yaml`.
-2. Load the schema and the demo data, in this order:
+1. Create `.env` with the token the admin app reads compiled flags from the SDK API with:
+
+   ```
+   echo "SECRET_INTERNAL_TOKEN=$(openssl rand -hex 32)" > .env
+   ```
+
+2. Open this folder in Vantage. It starts SurrealDB and the SDK API from `composer.yaml`.
+3. Load the schema and the demo data, in this order:
 
    ```
    for f in schema seed events; do tests/surql.sh tests/$f.surql; done
    tests/sync_web_users.sh
    ```
 
-3. In Vantage, open Services and start the `flags` web app. It opens in your browser.
-4. Sign in as any demo user with the password `demo`, for example `admin@example.com`.
+4. In Vantage, open Services and start the `flags` web app. It opens in your browser.
+5. Sign in as any demo user with the password `demo`, for example `admin@example.com`.
 
 The SDK API listens on `http://127.0.0.1:4380`. In local development it accepts six fixed tokens,
 listed in `docs/spec/reference-data/default-tokens.json`.

@@ -345,48 +345,4 @@ DEFINE FUNCTION OVERWRITE fn::rebuild_tags() {
     fn::count_tags(array::flatten(SELECT VALUE fn::list_items(tags) FROM flag WHERE archived != true), 1);
 };
 
--- ================================================================ compilation (spec 03)
--- What SDKs receive: standard Unleash `flexibleRollout` strategies. Overridden brands sorted,
--- each giving [rollout, allowlist]; then the default rule scoped NOT_IN the overridden brands.
-
-DEFINE FUNCTION OVERWRITE fn::constraint($field: string, $op: string, $values: array) -> object {
-    RETURN { contextName: $field, operator: $op, values: $values, inverted: false, caseInsensitive: false };
-};
-
-DEFINE FUNCTION OVERWRITE fn::emit($rollout: int, $allow: string, $scope: array, $group: string, $cf: string) -> array {
-    LET $ids = fn::list_items($allow);
-    RETURN array::concat(
-        IF $rollout > 0 THEN [{
-            name: 'flexibleRollout', constraints: $scope,
-            parameters: { rollout: <string> $rollout, stickiness: IF $rollout = 100 THEN 'default' ELSE $cf END, groupId: $group },
-            variants: [] }] ELSE [] END,
-        IF $rollout < 100 AND array::len($ids) > 0 THEN [{
-            name: 'flexibleRollout', constraints: array::push($scope, fn::constraint($cf, 'IN', $ids)),
-            parameters: { rollout: '100', stickiness: 'default', groupId: $group },
-            variants: [] }] ELSE [] END);
-};
-
-DEFINE FUNCTION OVERWRITE fn::strategies($fe: record<flag_env>) -> array {
-    LET $s = settings:main;
-    LET $name = $fe.flag.name;
-    LET $ovs = SELECT brand.key AS bkey, rollout ?? 0 AS rollout, allowlist FROM brand_override
-               WHERE scope = <string> record::id($fe) ORDER BY bkey;
-    LET $scope = IF array::len($ovs) = 0 THEN []
-                 ELSE [fn::constraint($s.brand_context_field, 'NOT_IN', $ovs.bkey)] END;
-    RETURN array::concat(
-        array::flatten(array::map($ovs, |$o| fn::emit($o.rollout, $o.allowlist,
-            [fn::constraint($s.brand_context_field, 'IN', [$o.bkey])], $name, $s.customer_context_field))),
-        fn::emit($fe.default_rollout, $fe.default_allowlist, $scope, $name, $s.customer_context_field));
-};
-
--- One ClientFeature (spec 04). Served disabled with no strategies when the switch is off or
--- nothing would match (spec 03 "Why these choices").
-DEFINE FUNCTION OVERWRITE fn::compile($fe: record<flag_env>) -> object {
-    LET $st = fn::strategies($fe);
-    LET $on = $fe.enabled AND array::len($st) > 0;
-    RETURN {
-        name: $fe.flag.name, type: 'release', description: $fe.flag.description ?? NULL, project: 'default',
-        enabled: $on, stale: $fe.flag.stale, impressionData: false,
-        strategies: IF $on THEN $st ELSE [] END, variants: []
-    };
-};
+-- Compilation (what SDKs receive, spec 03) lives in the flag service: service/src/compile.rs.

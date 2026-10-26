@@ -29,6 +29,8 @@ pub struct App {
     pub metrics: Arc<Metrics>,
     /// Serve the two Unleash Edge endpoints (EDGE_ENDPOINTS=true); off unless Edge is used.
     pub edge: bool,
+    /// INTERNAL_TOKEN: the bearer token of /internal/features; unset turns it off.
+    pub internal_token: Option<String>,
 }
 
 /// Edge requests larger than these are refused (400), so one post can't flood the buffer.
@@ -66,7 +68,8 @@ pub fn router(app: App) -> Router {
         .route("/api/client/features", get(client_features))
         .route("/api/client/features/{name}", get(client_feature))
         .route("/api/client/register", post(client_register))
-        .route("/api/client/metrics", post(client_metrics));
+        .route("/api/client/metrics", post(client_metrics))
+        .route("/internal/features", get(crate::internal::features));
     if app.edge {
         routes = routes
             .route("/api/client/metrics/bulk", post(client_metrics_bulk))

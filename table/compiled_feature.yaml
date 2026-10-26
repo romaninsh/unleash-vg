@@ -1,17 +1,13 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# What SDKs receive per flag x environment (fn::compile, spec 03/04). Archived flags excluded.
-datasource: flags
+# What SDKs receive per flag x environment (spec 03/04), as the flag service compiled it.
+# Archived flags are not served, so not listed.
+datasource: flag_service
 title: SDK output
+table: internal/features
 columns:
   id: { type: string, flags: [id, hidden] }
-  flag: { type: string, flags: [hidden], references: { table: flag, kind: has_one, name: flag } }
-  flag.name: { label: Flag, type: string }
-  environment: { type: string, flags: [hidden] }
+  flag_name: { label: Flag, type: string, flags: [title] }
   env_key: { label: Environment, type: string }
   enabled: { label: Switch, type: bool }
-  served_enabled: { label: Served as enabled, type: bool, expr: 'surreal::expr("fn::compile(id).enabled")' }
-  feature: { label: JSON sent to apps, type: string, expr: 'surreal::expr("encoding::json::encode(fn::compile(id))")' }
-surreal:
-  table: flag_env
-  modify: |
-    self.with_condition(surreal::expr("flag.archived != true"))
+  served_enabled: { label: Served as enabled, type: bool }
+  feature: { label: JSON sent to apps, type: string }

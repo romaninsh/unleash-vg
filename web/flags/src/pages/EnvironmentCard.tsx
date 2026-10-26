@@ -257,8 +257,8 @@ const Preview = observer((props: {
 
   async function check() {
     const [row] = await db.compiled.where({ flag_name: props.flag, env_key: props.env }).load();
-    if (!row?.served) return;
-    const feature = JSON.parse(row.served) as Feature;
+    if (!row?.feature) return;
+    const feature = JSON.parse(row.feature) as Feature;
     const brandField = config?.brand_context_field ?? "brand";
     const customerField = config?.customer_context_field ?? "userId";
     const id = customer.trim();

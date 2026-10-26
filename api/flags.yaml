@@ -88,7 +88,7 @@ entities:
     observe: web_compiled
     read_only: true
     params:
-      columns: [flag_name, env_key, served]
+      columns: [flag_name, env_key, feature]
       filter: [flag_name, env_key]
   - name: usage
     observe: web_usage

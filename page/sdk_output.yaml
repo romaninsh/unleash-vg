@@ -14,7 +14,7 @@ body:
     params:
       search: true
       columns:
-        flag.name: { label: Flag, width: 240 }
+        flag_name: { label: Flag, width: 240 }
         enabled: { label: Switch, width: 80 }
         served_enabled: { label: Served as enabled, width: 140 }
         feature: { label: JSON }

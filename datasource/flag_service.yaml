@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=./datasource-schema-1.json
+# The flag service (composer.yaml `flag-service`, service/): what it compiled and serves to SDKs,
+# read from /internal/features. SECRET_INTERNAL_TOKEN in .env; the service gets the same value
+# as INTERNAL_TOKEN.
+type: api-client
+description: The flag service's compiled flags, exactly as SDKs receive them (read-only).
+url: http://flag-service:4380
+auth:
+  type: bearer
+  token: "${secret.internal_token}"

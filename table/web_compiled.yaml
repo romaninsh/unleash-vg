@@ -1,13 +1,11 @@
 # yaml-language-server: $schema=./table-schema-1.json
-# Web: what SDKs receive for one flag x environment (fn::compile), for the flag page's preview.
-# Reads flag_env directly so one card computes one row. Read-only (the API entity is
-# `read_only: true`). `served` moves into the SDK service with the compiler (agents/TASKS.md).
-datasource: flags
+# Web: what SDKs receive for one flag x environment, for the flag page's preview. Read from
+# the flag service, which compiles and serves it.
+datasource: flag_service
 title: Compiled feature (web, read)
+table: internal/features
 columns:
   id: { type: string, flags: [id] }
   flag_name: { type: string, flags: [title] }
   env_key: { type: string }
-  served: { type: string, expr: 'surreal::expr("encoding::json::encode(fn::compile(id))")' }
-surreal:
-  table: flag_env
+  feature: { type: string }

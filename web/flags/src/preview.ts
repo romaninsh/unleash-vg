@@ -1,7 +1,7 @@
 // "Would this brand / customer get the flag?" for the flag page's preview (spec 05 screen 3).
 //
 // The Vantage API can't run server logic for signed-in staff (FEEDBACK.md), so the page
-// evaluates what SDKs receive itself: the compiled feature (fn::compile) is run through
+// evaluates what SDKs receive itself: the feature the flag service compiled is run through
 // Unleash's own rules for the only shapes we compile - `flexibleRollout` with IN / NOT_IN
 // constraints - using Unleash's percentage hash (murmur3, x86 32-bit, seed 0). The SDK
 // service evaluates the same JSON with Unleash's engine; tests/preview_parity.ts compares.

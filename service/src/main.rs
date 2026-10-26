@@ -10,9 +10,12 @@
 //!
 //! Environment: SURREAL_URL (ws://127.0.0.1:8000), SURREAL_NS / SURREAL_DB (flags),
 //! SURREAL_USER / SURREAL_PASS (root), PORT (4380), METRICS_FLUSH_SECS (30), RUST_LOG (info),
-//! EDGE_ENDPOINTS (`true` serves /edge/validate and /api/client/metrics/bulk for Unleash Edge).
+//! EDGE_ENDPOINTS (`true` serves /edge/validate and /api/client/metrics/bulk for Unleash Edge),
+//! INTERNAL_TOKEN (bearer token of /internal/features, what the admin app reads; unset = off).
 
 mod api;
+mod compile;
+mod internal;
 mod metrics;
 mod state;
 mod store;
@@ -88,7 +91,11 @@ async fn serve(store: Arc<Store>) -> anyhow::Result<()> {
     if edge {
         tracing::info!("Unleash Edge endpoints enabled");
     }
-    let app = api::router(api::App { store, served, tokens: Arc::default(), metrics, edge })
+    let internal_token = std::env::var("INTERNAL_TOKEN").ok().filter(|t| !t.is_empty());
+    if internal_token.is_none() {
+        tracing::info!("INTERNAL_TOKEN unset: /internal/features is off");
+    }
+    let app = api::router(api::App { store, served, tokens: Arc::default(), metrics, edge, internal_token })
         .layer(SetResponseHeaderLayer::if_not_present(
             HeaderName::from_static("x-unleash-version"),
             HeaderValue::from_static(concat!("flag-service/", env!("CARGO_PKG_VERSION"))),

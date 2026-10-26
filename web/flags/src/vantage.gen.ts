@@ -186,7 +186,7 @@ export interface CompiledFields {
   readonly id: string;
   readonly flag_name: string | null;
   readonly env_key: string | null;
-  readonly served: string | null;
+  readonly feature: string | null;
 }
 
 export interface Compiled extends Model<"compiled", CompiledFields>, Readonly<CompiledFields> {
@@ -1214,7 +1214,7 @@ export const schema = {
       "sortable": [
         "flag_name",
         "env_key",
-        "served"
+        "feature"
       ],
       "filter": [
         "flag_name",
@@ -1231,7 +1231,7 @@ export const schema = {
         "env_key": {
           "type": "string"
         },
-        "served": {
+        "feature": {
           "type": "string"
         }
       },

@@ -4,10 +4,14 @@
 // has a brand override. Run with Node 25+: `node tests/preview_parity.ts`.
 // It adds a throwaway frontend token for production and revokes it at the end.
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { isEnabled, type Feature } from "../web/flags/src/preview.ts";
 
 const SERVICE = process.argv[2] ?? "http://127.0.0.1:4380";
 const SECRET = "default:production.preview-parity-" + Date.now().toString(16).padStart(24, "0");
+// INTERNAL_TOKEN, else SECRET_INTERNAL_TOKEN from the project's .env (the value the service gets)
+const internalToken = (): string =>
+  process.env.INTERNAL_TOKEN ?? readFileSync(".env", "utf8").match(/^SECRET_INTERNAL_TOKEN=(.*)$/m)?.[1] ?? "";
 const surql = (q: string): unknown[] => {
   const out = execFileSync("tests/surql.sh", ["-", "-f"], { input: q, encoding: "utf8" });
   return out.trim().split("\n").map((l) => JSON.parse(l.replace(/^#\d+ OK\s+/, "")));
@@ -19,9 +23,13 @@ try {
   await new Promise((r) => setTimeout(r, 3000)); // the service may cache "unknown token" for a few seconds
   const [settings] = surql("SELECT VALUE [brand_context_field, customer_context_field] FROM ONLY settings:main;") as [string[]];
   const [brandField, customerField] = settings as [string, string];
-  const [rows] = surql(`SELECT VALUE encoding::json::encode(fn::compile(id)) FROM flag_env
-    WHERE env_key = 'production' AND flag.archived != true AND flag.override_count > 0;`) as [string[]];
-  const features = rows.map((r) => JSON.parse(r) as Feature);
+  // what the service compiled, for the flags with brand overrides
+  const [withOverrides] = surql("SELECT VALUE name FROM flag WHERE archived != true AND override_count > 0;") as [string[]];
+  const compiled = await fetch(`${SERVICE}/internal/features?env_key=production`, { headers: { Authorization: `Bearer ${internalToken()}` } });
+  if (!compiled.ok) throw new Error(`/internal/features answered ${compiled.status}`);
+  const features = ((await compiled.json()) as { flag_name: string; feature: string }[])
+    .filter((r) => withOverrides.includes(r.flag_name))
+    .map((r) => JSON.parse(r.feature) as Feature);
   const brands = ["", ...(surql("SELECT VALUE key FROM brand;")[0] as string[]), "unknown-brand"];
   const listed = new Set<string>();
   for (const f of features) for (const s of f.strategies) for (const c of s.constraints ?? []) if (c.contextName === customerField) c.values.forEach((v) => listed.add(v));

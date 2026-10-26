@@ -25,6 +25,8 @@ services:
       SURREAL_PASS: root
       RUST_LOG: info
       PORT: "4380"
+      # what the admin app and web API read compiled flags with (datasource sdk.yaml); from .env
+      INTERNAL_TOKEN: ${SECRET_INTERNAL_TOKEN:-}
     ports:
       - "127.0.0.1:4380:4380"
     depends_on:

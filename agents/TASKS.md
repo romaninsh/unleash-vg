@@ -68,8 +68,8 @@ only our deployment, so visitors' tokens never pass through our server. Add our 
 The app was built on Vantage 1.5.2. Newer Vantage can replace hand-made parts:
 `read_only: true` instead of query tables used as read-only views, Vantage's hashing functions
 instead of SurrealQL ones, `log_changes:` for the audit log instead of database events, and
-`invariants:` rules instead of the `*_scope` fields. The flag service could compile flags itself
-and cache them per environment revision, instead of calling `fn::compile` in the database.
+`invariants:` rules instead of the `*_scope` fields. (Done: the flag service compiles flags itself,
+`service/src/compile.rs`, and the admin app and web API read them from its `/internal/features`.)
 
 ## Running on MongoDB
 

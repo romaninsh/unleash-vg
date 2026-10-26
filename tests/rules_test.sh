@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# tests/rules_test.sh - spec 09 acceptance A2 (the four worked examples of spec 03) and the
-# database rules the admin app relies on, run on a throw-away SurrealDB database `rules_test`
+# tests/rules_test.sh - the database rules the admin app relies on (spec 09 acceptance A2's
+# compilation examples are in service/src/compile/tests.rs), run on a throw-away SurrealDB database `rules_test`
 # loaded from tests/schema.surql + tests/seed.surql + tests/events.surql.
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -17,51 +17,21 @@ line = sys.stdin.read().strip()
 if " ERR " in line: print("ERR " + line.split(" ERR ", 1)[1]); sys.exit()
 print(json.dumps(json.loads(line.split("  ", 1)[1]), sort_keys=True, separators=(",", ":")))'
 }
-canon() { python3 -c 'import json,sys; print(json.dumps(json.loads(sys.argv[1]), sort_keys=True, separators=(",", ":")))' "$1"; }
 
 fail=0
 check() { if [ "$2" = "$3" ]; then echo "ok - $1"; else echo "FAIL - $1"; echo "  expected: $2"; echo "  got:      $3"; fail=1; fi; }
 errs() { case "$2" in ERR*"$1"*) echo yes ;; *) echo "no: $2" ;; esac; }
 
-# enabled + strategies without the always-empty strategy `variants` (the spec examples omit it)
-served() {
-  Q "LET \$f = fn::compile(type::record('flag_env', '$1')); RETURN { enabled: \$f.enabled, strategies: \$f.strategies.map(|\$s| \$s.{name, constraints, parameters}) };"
-}
+# Compilation (spec 03's four examples) is tested in the flag service: service/src/compile/tests.rs.
+# The flags below set up the database rules checked after them.
 mk() { Q "CREATE flag:$1 SET name = '$1', description = 'test'; UPDATE type::record('flag_env', '$1@production') SET enabled = true;" >/dev/null; }
 
 mk ex1
-check "example 1: ON for everyone" \
-  "$(canon '{"enabled":true,"strategies":[{"name":"flexibleRollout","constraints":[],"parameters":{"rollout":"100","stickiness":"default","groupId":"ex1"}}]}')" \
-  "$(served ex1@production)"
-
 mk ex2
 Q "CREATE brand_override SET scope = 'ex2@production', brand = brand:\`bank-c\`, rollout = 10, allowlist = '1001, 1002';
    CREATE brand_override SET scope = 'ex2@production', brand = brand:\`bank-b\`, rollout = 0;" >/dev/null
-check "example 2: brand overrides with rollout and allowlist" "$(canon '{"enabled":true,"strategies":[
-  {"name":"flexibleRollout","constraints":[{"contextName":"brand","operator":"IN","values":["bank-c"],"inverted":false,"caseInsensitive":false}],
-   "parameters":{"rollout":"10","stickiness":"userId","groupId":"ex2"}},
-  {"name":"flexibleRollout","constraints":[{"contextName":"brand","operator":"IN","values":["bank-c"],"inverted":false,"caseInsensitive":false},
-                                           {"contextName":"userId","operator":"IN","values":["1001","1002"],"inverted":false,"caseInsensitive":false}],
-   "parameters":{"rollout":"100","stickiness":"default","groupId":"ex2"}},
-  {"name":"flexibleRollout","constraints":[{"contextName":"brand","operator":"NOT_IN","values":["bank-b","bank-c"],"inverted":false,"caseInsensitive":false}],
-   "parameters":{"rollout":"100","stickiness":"default","groupId":"ex2"}}]}')" "$(served ex2@production)"
-
 mk ex3
-Q "UPDATE flag_env:\`ex3@production\` SET default_rollout = 0;
-   CREATE brand_override SET scope = 'ex3@production', brand = brand:\`bank-a\`, rollout = 100;" >/dev/null
-check "example 3: OFF by default, ON for one brand" \
-  "$(canon '{"enabled":true,"strategies":[{"name":"flexibleRollout","constraints":[{"contextName":"brand","operator":"IN","values":["bank-a"],"inverted":false,"caseInsensitive":false}],"parameters":{"rollout":"100","stickiness":"default","groupId":"ex3"}}]}')" \
-  "$(served ex3@production)"
-
 mk ex4
-Q "UPDATE flag_env:\`ex4@production\` SET default_rollout = 0;" >/dev/null
-check "example 4: all OFF is served disabled" '{"enabled":false,"strategies":[]}' "$(served ex4@production)"
-check "switch OFF serves nothing" '{"enabled":false,"strategies":[]}' "$(served ex1@development)"
-
-Q "UPDATE settings:main SET brand_context_field = 'tenant', customer_context_field = 'customerId';" >/dev/null
-check "settings rename the context fields" '["tenant","customerId"]' \
-  "$(Q "LET \$f = fn::compile(flag_env:\`ex2@production\`); RETURN [\$f.strategies[0].constraints[0].contextName, \$f.strategies[0].parameters.stickiness];")"
-Q "UPDATE settings:main SET brand_context_field = 'brand', customer_context_field = 'userId';" >/dev/null
 
 before="$(Q "RETURN (SELECT VALUE revision_id FROM environment ORDER BY sort_order);")"
 Q "UPDATE flag_env:\`ex1@uat\` SET default_rollout = 50;" >/dev/null
@@ -157,4 +127,4 @@ check "the list's search text, tag key and last activity are kept" '["tg2 pay by
         RETURN [flag:tg2.search_text, flag:tg2.tags_key, flag:tg2.last_activity = <string> flag:tg2.created_at];")"
 
 echo "REMOVE DATABASE IF EXISTS rules_test;" | tests/surql.sh - -q >/dev/null
-if [ "$fail" = 0 ]; then echo "PASS: compilation and rules hold"; else echo "FAIL"; exit 1; fi
+if [ "$fail" = 0 ]; then echo "PASS: database rules hold"; else echo "FAIL"; exit 1; fi
