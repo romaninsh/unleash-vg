@@ -345,28 +345,6 @@ DEFINE FUNCTION OVERWRITE fn::rebuild_tags() {
     fn::count_tags(array::flatten(SELECT VALUE fn::list_items(tags) FROM flag WHERE archived != true), 1);
 };
 
--- Details line of an environment card on the flag page.
-DEFINE FUNCTION OVERWRITE fn::env_detail($fe: record<flag_env>) -> string {
-    LET $name = $fe.flag.name;
-    LET $env = <string> record::id($fe.environment);
-    LET $n = count(SELECT id FROM brand_override WHERE scope = $name + '@' + $env);
-    RETURN 'Default (all other brands): ' + fn::rule_label($fe.default_rollout, $fe.default_allowlist)
-        + IF $n = 0 THEN '' ELSE IF $n = 1 THEN '  ·  1 brand override' ELSE '  ·  ' + <string> $n + ' brand overrides' END
-        + '  ·  24 h: ' + fn::usage($name, $env, 24h) + '  ·  7 d: ' + fn::usage($name, $env, 7d);
-};
-
-DEFINE FUNCTION OVERWRITE fn::env_seen($fe: record<flag_env>) -> string {
-    LET $s = type::record('flag_last_seen', $fe.flag.name + ':' + <string> record::id($fe.environment));
-    RETURN IF $s.last_seen_at = NONE THEN 'never' ELSE <string> $s.last_seen_at END;
-};
-
--- "24 h: 9105 yes / 117 no" for one flag x environment.
-DEFINE FUNCTION OVERWRITE fn::usage($flag: string, $env: string, $since: duration) -> string {
-    LET $m = (SELECT math::sum(yes) AS y, math::sum(no) AS n FROM metric_hourly
-              WHERE flag = $flag AND environment = $env AND hour >= time::now() - $since GROUP ALL)[0];
-    RETURN <string> ($m.y ?? 0) + ' yes / ' + <string> ($m.n ?? 0) + ' no';
-};
-
 -- ================================================================ compilation (spec 03)
 -- What SDKs receive: standard Unleash `flexibleRollout` strategies. Overridden brands sorted,
 -- each giving [rollout, allowlist]; then the default rule scoped NOT_IN the overridden brands.
