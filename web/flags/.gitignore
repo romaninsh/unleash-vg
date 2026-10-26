@@ -1,0 +1,6 @@
+dist
+node_modules
+schema.json
+.schema.json.*.tmp
+test-results
+playwright-report
