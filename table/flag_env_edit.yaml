@@ -9,3 +9,7 @@ columns:
   default_allowlist: { label: Customers always ON, type: string }
 surreal:
   table: flag_env
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_rule.rhai

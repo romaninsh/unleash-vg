@@ -12,3 +12,7 @@ columns:
   allowlist: { label: Customers always ON, type: string }
   rule_label: { label: Rule, type: string, lazy: !include ../script/rule_label.rhai }
   ready: { type: bool, flags: [hidden, calculated] }
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_rule.rhai

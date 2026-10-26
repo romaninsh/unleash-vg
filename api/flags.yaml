@@ -154,7 +154,7 @@ entities:
   - name: override_edits
     observe: web_override_edit
     params:
-      columns: [scope, brand, rollout, allowlist, env_key, updated_by]
+      columns: [scope, brand, rollout, allowlist, env_key]
       filter: [scope]
     api: { scope: { env_key: { in: $principal.envs } } }
 

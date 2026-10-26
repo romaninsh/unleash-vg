@@ -28,7 +28,8 @@ mk() { Q "CREATE flag:$1 SET name = '$1', description = 'test'; UPDATE type::rec
 
 mk ex1
 mk ex2
-Q "CREATE brand_override SET scope = 'ex2@production', brand = brand:\`bank-c\`, rollout = 10, allowlist = '1001, 1002';
+# bank-c as a web card save writes it (marked with the person), bank-b as any other write
+Q "CREATE brand_override SET scope = 'ex2@production', brand = brand:\`bank-c\`, rollout = 10, allowlist = '1001, 1002', updated_by = 'maria@example.com';
    CREATE brand_override SET scope = 'ex2@production', brand = brand:\`bank-b\`, rollout = 0;" >/dev/null
 mk ex3
 mk ex4
@@ -56,14 +57,12 @@ check "audit events can't be changed" yes "$(errs "cannot be changed" "$(Q "UPDA
 Q "UPDATE flag:ex1 SET archived = true; UPDATE flag:ex1 SET archived = false;" >/dev/null
 check "revive switches every environment OFF" "0" "$(Q "RETURN count(SELECT id FROM flag_env WHERE flag = flag:ex1 AND enabled = true);")"
 check "archive stamps and revive clears archived_at" "null" "$(Q "RETURN flag:ex1.archived_at;")"
-check "every rule change is audited" "1" \
-  "$(Q "RETURN count(SELECT id FROM audit_event WHERE flag = 'ex2' AND type = 'feature-brand-override-added' AND brand = 'bank-c' AND summary CONTAINS '10% + 2 customers');")"
+# Vantage logs every write it makes; the database logs only the overrides a card save changes.
+check "a card save's override changes are audited under the person, other writes are left to Vantage" '[["maria@example.com"],0]' \
+  "$(Q "RETURN [(SELECT VALUE created_by FROM audit_event WHERE flag = 'ex2' AND type = 'feature-brand-override-added' AND brand = 'bank-c' AND summary CONTAINS '10% + 2 customers'),
+                count(SELECT id FROM audit_event WHERE flag = 'ex2' AND brand = 'bank-b')];")"
 check "a failed change writes no audit event" "0" \
   "$(Q "CREATE brand_override SET scope = 'ex1@uat', brand = brand:\`bank-f\`; RETURN count(SELECT id FROM audit_event WHERE brand = 'bank-f' AND type CONTAINS 'override');" )"
-Q "UPDATE flag_env:\`ex3@uat\` SET enabled = true, updated_by = 'tom.berg@example.com';" >/dev/null
-Q "UPDATE flag_env:\`ex3@uat\` SET enabled = false;" >/dev/null
-check "web changes are logged under the person, then attribution resets" '["tom.berg@example.com","admin"]' \
-  "$(Q "RETURN (SELECT VALUE created_by FROM audit_event WHERE flag = 'ex3' AND environment = 'uat' ORDER BY created_at, summary DESC);")"
 check "an override's env_key follows its scope" '"production"' \
   "$(Q "RETURN (SELECT VALUE env_key FROM brand_override WHERE scope = 'ex2@production')[0];")"
 check "a token is stored as a hash only, with lookup and hint" '[true,true,"default:uat.0123456789ab...",null,true,true]' \

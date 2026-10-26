@@ -6,8 +6,9 @@ DEFINE FUNCTION OVERWRITE fn::rule_json($rollout: option<int>, $allow: option<st
     RETURN { rollout: $rollout, allowlist: fn::list_items($allow) };
 };
 
--- Before/after payloads are stored as JSON text. $by: who made the change (the web app sends
--- `updated_by` with each write; the desktop app sends nothing and is logged as 'admin').
+-- Vantage writes the audit log for every change it makes (`log_changes:` on the tables). This is
+-- for the one place the database changes rows itself: the brand overrides of a web card save,
+-- logged under the person the save names in `updated_by`. Payloads are JSON text, as Vantage's.
 DEFINE FUNCTION OVERWRITE fn::audit($by: string, $type: string, $flag: option<string>, $env: option<string>, $brand: option<string>,
                                     $summary: string, $pre: option<object>, $data: option<object>) {
     CREATE audit_event SET created_by = $by, type = $type, flag = $flag, environment = $env, brand = $brand, summary = $summary,
@@ -116,21 +117,10 @@ WHEN $event = 'DELETE' OR ($event = 'UPDATE' AND ($before.enabled != $after.enab
                 };
             };
         };
+        -- the switch and default rule are audited by Vantage (table/flag_env.yaml log_changes:)
         IF $before.enabled != $after.enabled OR $before.default_rollout != $after.default_rollout
            OR $before.default_allowlist != $after.default_allowlist {
             UPDATE $after.id SET revision += 1;
-            IF $before.enabled != $after.enabled {
-                fn::audit($by, IF $after.enabled THEN 'feature-environment-enabled' ELSE 'feature-environment-disabled' END,
-                    $name, $env, NONE, $env + ' switched ' + IF $after.enabled THEN 'ON' ELSE 'OFF' END,
-                    { enabled: $before.enabled }, { enabled: $after.enabled });
-            };
-            IF $before.default_rollout != $after.default_rollout OR $before.default_allowlist != $after.default_allowlist {
-                fn::audit($by, 'feature-default-rule-updated', $name, $env, NONE,
-                    $env + ' - Default: ' + fn::rule_label($before.default_rollout, $before.default_allowlist)
-                         + ' -> ' + fn::rule_label($after.default_rollout, $after.default_allowlist),
-                    fn::rule_json($before.default_rollout, $before.default_allowlist),
-                    fn::rule_json($after.default_rollout, $after.default_allowlist));
-            };
             fn::bump_revision($after.environment);
             fn::refresh_flag($after.flag);
         };
@@ -139,9 +129,12 @@ WHEN $event = 'DELETE' OR ($event = 'UPDATE' AND ($before.enabled != $after.enab
 
 -- ---------------------------------------------------------------- brand overrides
 
+-- Overrides written through Vantage are audited by Vantage (table/brand_override.yaml
+-- log_changes:). The ones a web card save changes are written by flag_env_changes above, which
+-- marks them with the person in updated_by: only those are audited here.
 DEFINE EVENT OVERWRITE brand_override_changes ON TABLE brand_override THEN {
-    LET $by = $after.updated_by ?? $before.updated_by ?? 'admin';
-    -- keep a marker set on its own (the web app marks an override just before removing it)
+    LET $by = $after.updated_by ?? $before.updated_by;
+    LET $card_save = $by != NONE;
     IF $after.updated_by != NONE AND ($event = 'CREATE' OR $before.rollout != $after.rollout OR $before.allowlist != $after.allowlist) {
         UPDATE $after.id SET updated_by = NONE;
     };
@@ -153,28 +146,34 @@ DEFINE EVENT OVERWRITE brand_override_changes ON TABLE brand_override THEN {
             rollout = $after.rollout ?? $fe.default_rollout,
             allowlist = IF $after.rollout = NONE THEN $fe.default_allowlist ELSE $after.allowlist END;
         LET $cur = (SELECT * FROM ONLY $after.id);
-        fn::audit($by, 'feature-brand-override-added', $fe.flag.name, record::id($fe.environment), $after.brand.key,
-            record::id($fe.environment) + ' - ' + $after.brand.display_name + ': override added, ' + fn::rule_label($cur.rollout, $cur.allowlist),
-            NONE, fn::rule_json($cur.rollout, $cur.allowlist));
+        IF $card_save {
+            fn::audit($by, 'feature-brand-override-added', $fe.flag.name, record::id($fe.environment), $after.brand.key,
+                record::id($fe.environment) + ' - ' + $after.brand.display_name + ': override added, ' + fn::rule_label($cur.rollout, $cur.allowlist),
+                NONE, fn::rule_json($cur.rollout, $cur.allowlist));
+        };
         UPDATE $fe SET revision += 1, touched_at = time::now();
         fn::bump_revision($fe.environment);
         fn::refresh_flag($fe.flag);
     } ELSE IF $event = 'UPDATE' AND $before.ready AND ($before.rollout != $after.rollout OR $before.allowlist != $after.allowlist) {
         LET $fe = $after.flag_env;
-        fn::audit($by, 'feature-brand-override-updated', $fe.flag.name, record::id($fe.environment), $after.brand.key,
-            record::id($fe.environment) + ' - ' + $after.brand.display_name + ': '
-                + fn::rule_label($before.rollout, $before.allowlist) + ' -> ' + fn::rule_label($after.rollout, $after.allowlist),
-            fn::rule_json($before.rollout, $before.allowlist), fn::rule_json($after.rollout, $after.allowlist));
+        IF $card_save {
+            fn::audit($by, 'feature-brand-override-updated', $fe.flag.name, record::id($fe.environment), $after.brand.key,
+                record::id($fe.environment) + ' - ' + $after.brand.display_name + ': '
+                    + fn::rule_label($before.rollout, $before.allowlist) + ' -> ' + fn::rule_label($after.rollout, $after.allowlist),
+                fn::rule_json($before.rollout, $before.allowlist), fn::rule_json($after.rollout, $after.allowlist));
+        };
         UPDATE $fe SET revision += 1, touched_at = time::now();
         fn::bump_revision($fe.environment);
         fn::refresh_flag($fe.flag);
     } ELSE IF $event = 'DELETE' AND $before.flag_env.id != NONE {
         -- skipped when the whole flag is being deleted (its flag_env row is already gone)
         LET $fe = $before.flag_env;
-        fn::audit($by, 'feature-brand-override-removed', $fe.flag.name, record::id($fe.environment), $before.brand.key,
-            record::id($fe.environment) + ' - ' + ($before.brand.display_name ?? <string> record::id($before.brand))
-                + ': override removed (was ' + fn::rule_label($before.rollout, $before.allowlist) + ', now follows default)',
-            fn::rule_json($before.rollout, $before.allowlist), NONE);
+        IF $card_save {
+            fn::audit($by, 'feature-brand-override-removed', $fe.flag.name, record::id($fe.environment), $before.brand.key,
+                record::id($fe.environment) + ' - ' + ($before.brand.display_name ?? <string> record::id($before.brand))
+                    + ': override removed (was ' + fn::rule_label($before.rollout, $before.allowlist) + ', now follows default)',
+                fn::rule_json($before.rollout, $before.allowlist), NONE);
+        };
         UPDATE $fe SET revision += 1, touched_at = time::now();
         fn::bump_revision($fe.environment);
         fn::refresh_flag($fe.flag);

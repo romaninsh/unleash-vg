@@ -28,3 +28,7 @@ columns:
   seen_at: { type: timestamp, flags: [hidden], lazy: 'row["last_seen.last_seen_at"]' }
 references:
   overrides: { table: brand_override, kind: has_many, foreign_key: flag_env }
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_rule.rhai

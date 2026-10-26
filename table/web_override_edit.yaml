@@ -9,6 +9,9 @@ columns:
   rollout: { type: int }
   allowlist: { type: string }
   env_key: { type: string }
-  updated_by: { type: string }
 surreal:
   table: brand_override
+log_changes:
+  into: audit_event
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_rule.rhai

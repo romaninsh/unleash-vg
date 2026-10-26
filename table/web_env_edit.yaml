@@ -8,9 +8,16 @@ columns:
   default_rollout: { type: int }
   default_allowlist: { type: string }
   env_key: { type: string, flags: [calculated] }
+  # who makes a card save: the database names them on the brand overrides the save changes
   updated_by: { type: string }
   # a whole-card save: see tests/schema.surql (flag_env)
   expected_revision: { type: int }
   pending_overrides: { type: string }
 surreal:
   table: flag_env
+log_changes:
+  into: audit_event
+  # a card save's plumbing; the overrides it changes are logged by the database
+  exclude: [pending_overrides, expected_revision, updated_by]
+  columns: { who: created_by, at: created_at, before: pre_data, after: data }
+  script: !include ../script/log_rule.rhai
