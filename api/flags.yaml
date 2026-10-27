@@ -166,3 +166,7 @@ entities:
 auth:
   local:
     tokens: !include ../private/web-tokens.yaml
+  ci:
+    tokens: !include ../private/web-tokens.yaml
+  prod:
+    tokens: !include ../private/web-tokens.yaml
