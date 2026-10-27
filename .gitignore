@@ -21,11 +21,17 @@ data/
 .DS_Store
 # --- end managed by Vantage
 
+# The template for .env (the managed block above ignores .env.*).
+!.env.example
+
 # Skill copies Vantage installs and refreshes in every project it opens.
 .agents/
 
 # Generated sign-in list for the web app (tests/sync_web_users.sh).
 private/
+
+# Working notes for whoever builds the app (the brief, open tasks); kept out of the public repo.
+agents/
 
 # Build output.
 service/target/
