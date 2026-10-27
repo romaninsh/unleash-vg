@@ -25,6 +25,28 @@ pub struct DbConfig {
     pub database: String,
     pub user: String,
     pub pass: String,
+    pub auth: AuthLevel,
+}
+
+/// The level `user` / `pass` sign in at: SurrealDB finds a user only at the level it was
+/// defined (a SurrealDB Cloud database user is `Database`).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AuthLevel {
+    Root,
+    Namespace,
+    Database,
+}
+
+impl AuthLevel {
+    /// `SURREAL_AUTH`'s value: `root` (also empty), `namespace` or `database`.
+    pub fn from_env_value(value: &str) -> anyhow::Result<AuthLevel> {
+        match value {
+            "" | "root" => Ok(AuthLevel::Root),
+            "namespace" => Ok(AuthLevel::Namespace),
+            "database" => Ok(AuthLevel::Database),
+            other => Err(anyhow!("SURREAL_AUTH must be root, namespace or database, not {other:?}")),
+        }
+    }
 }
 
 pub struct Store {
@@ -40,18 +62,18 @@ impl Store {
     }
 
     async fn connect(&self) -> anyhow::Result<SurrealDB> {
-        let client = tokio::time::timeout(
-            QUERY_TIMEOUT,
-            SurrealConnection::new()
-                .url(&self.cfg.url)
-                .namespace(&self.cfg.namespace)
-                .database(&self.cfg.database)
-                .auth_root(&self.cfg.user, &self.cfg.pass)
-                .connect(),
-        )
-        .await
-        .context("connecting to SurrealDB timed out")?
-        .map_err(|e| anyhow!("connecting to SurrealDB: {e}"))?;
+        let connection =
+            SurrealConnection::new().url(&self.cfg.url).namespace(&self.cfg.namespace).database(&self.cfg.database);
+        let (user, pass) = (&self.cfg.user, &self.cfg.pass);
+        let connection = match self.cfg.auth {
+            AuthLevel::Root => connection.auth_root(user, pass),
+            AuthLevel::Namespace => connection.auth_namespace(user, pass),
+            AuthLevel::Database => connection.auth_database(user, pass),
+        };
+        let client = tokio::time::timeout(QUERY_TIMEOUT, connection.connect())
+            .await
+            .context("connecting to SurrealDB timed out")?
+            .map_err(|e| anyhow!("connecting to SurrealDB: {e}"))?;
         tracing::info!(url = %self.cfg.url, "connected to SurrealDB");
         Ok(SurrealDB::new(client))
     }

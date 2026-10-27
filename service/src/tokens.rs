@@ -1,9 +1,9 @@
 //! API tokens (spec 04 "API tokens", "Common rules").
 //!
 //! Only argon2id hashes are stored. A token is found by `lookup` (its first 24 characters)
-//! and checked against the hash. Checks are cached for `CACHE_TTL`, so argon2 runs once per
-//! token per window; a revoked token stops working within that window. `last_used_at` is
-//! written at most once a minute per token.
+//! and checked against the hash. Checks are cached for the cache lifetime (`TOKEN_CACHE_SECS`,
+//! 30 s by default), so argon2 runs once per token per window; a revoked token stops working
+//! within that window. `last_used_at` is written at most once a minute per token.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -15,7 +15,6 @@ use sha2::{Digest, Sha256};
 
 use crate::store::{Store, surreal_expr};
 
-const CACHE_TTL: Duration = Duration::from_secs(30);
 const MISS_TTL: Duration = Duration::from_secs(5);
 const USED_EVERY: Duration = Duration::from_secs(60);
 pub const LOOKUP_LEN: usize = 24;
@@ -38,8 +37,9 @@ struct Cached {
     at: Instant,
 }
 
-#[derive(Default)]
 pub struct Tokens {
+    /// How long a found token stays cached.
+    cache_ttl: Duration,
     cache: Mutex<HashMap<String, Cached>>,
     used: Mutex<HashMap<String, Instant>>,
 }
@@ -55,6 +55,10 @@ fn lookup_of(secret: &str) -> String {
 }
 
 impl Tokens {
+    pub fn new(cache_ttl: Duration) -> Self {
+        Self { cache_ttl, cache: Mutex::default(), used: Mutex::default() }
+    }
+
     /// The token a secret belongs to, or None (unknown or revoked).
     pub async fn resolve(&self, store: &Arc<Store>, secret: &str) -> anyhow::Result<Option<Token>> {
         if secret.is_empty() {
@@ -62,7 +66,7 @@ impl Tokens {
         }
         let cache_key = hex::encode(Sha256::digest(secret.as_bytes()));
         if let Some(c) = self.cache.lock().expect("lock").get(&cache_key) {
-            let ttl = if c.token.is_some() { CACHE_TTL } else { MISS_TTL };
+            let ttl = if c.token.is_some() { self.cache_ttl } else { MISS_TTL };
             if c.at.elapsed() < ttl {
                 return Ok(c.token.clone());
             }
@@ -112,7 +116,10 @@ impl Tokens {
         let key = token.key.clone();
         tokio::spawn(async move {
             if let Err(e) = store
-                .query(surreal_expr!("UPDATE type::record('api_token', {}) SET last_used_at = time::now() RETURN NONE", key))
+                .query(surreal_expr!(
+                    "UPDATE type::record('api_token', {}) SET last_used_at = time::now() RETURN NONE",
+                    key
+                ))
                 .await
             {
                 tracing::warn!(error = %e, "could not stamp token last_used_at");
@@ -131,7 +138,14 @@ pub fn hash_secret(secret: &str) -> anyhow::Result<String> {
 }
 
 /// Store a token (a new secret, or an existing Unleash secret being imported; spec 09 step 3).
-pub async fn save_token(store: &Store, name: &str, kind: &str, env: &str, secret: &str, source: &str) -> anyhow::Result<()> {
+pub async fn save_token(
+    store: &Store,
+    name: &str,
+    kind: &str,
+    env: &str,
+    secret: &str,
+    source: &str,
+) -> anyhow::Result<()> {
     let hash = hash_secret(secret)?;
     let lookup = lookup_of(secret);
     let hint = format!("{lookup}...");
@@ -140,7 +154,13 @@ pub async fn save_token(store: &Store, name: &str, kind: &str, env: &str, secret
         .query(surreal_expr!(
             "CREATE api_token SET name = {}, type = {}, environment = type::record('environment', {}), source = {}, \
              secret_hash = {}, lookup = {}, hint = {}, created_by = 'flag-service' RETURN NONE",
-            name, kind, env, source, hash, lookup, hint
+            name,
+            kind,
+            env,
+            source,
+            hash,
+            lookup,
+            hint
         ))
         .await?;
     Ok(())

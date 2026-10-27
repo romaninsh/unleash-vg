@@ -43,13 +43,21 @@ fn on_for_everyone_is_one_full_rollout() {
 
 #[test]
 fn brand_overrides_come_first_in_brand_order_then_the_default_for_everyone_else() {
-    let f = compile(&flag("ex2", rule(100, ""), &[("bank-c", rule(10, "1001,1002")), ("bank-b", rule(0, ""))]), &contexts());
+    let f = compile(
+        &flag("ex2", rule(100, ""), &[("bank-c", rule(10, "1001,1002")), ("bank-b", rule(0, ""))]),
+        &contexts(),
+    );
     assert_eq!(f["enabled"], json!(true));
     assert_eq!(
         f["strategies"],
         json!([
             strategy(json!([constraint("brand", "IN", &["bank-c"])]), "10", "userId", "ex2"),
-            strategy(json!([constraint("brand", "IN", &["bank-c"]), constraint("userId", "IN", &["1001", "1002"])]), "100", "default", "ex2"),
+            strategy(
+                json!([constraint("brand", "IN", &["bank-c"]), constraint("userId", "IN", &["1001", "1002"])]),
+                "100",
+                "default",
+                "ex2"
+            ),
             strategy(json!([constraint("brand", "NOT_IN", &["bank-b", "bank-c"])]), "100", "default", "ex2"),
         ])
     );
@@ -59,7 +67,10 @@ fn brand_overrides_come_first_in_brand_order_then_the_default_for_everyone_else(
 fn off_by_default_but_on_for_one_brand() {
     let f = compile(&flag("ex3", rule(0, ""), &[("bank-a", rule(100, ""))]), &contexts());
     assert_eq!(f["enabled"], json!(true));
-    assert_eq!(f["strategies"], json!([strategy(json!([constraint("brand", "IN", &["bank-a"])]), "100", "default", "ex3")]));
+    assert_eq!(
+        f["strategies"],
+        json!([strategy(json!([constraint("brand", "IN", &["bank-a"])]), "100", "default", "ex3")])
+    );
 }
 
 #[test]

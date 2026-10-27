@@ -177,7 +177,13 @@ pub async fn flush(store: &Store, metrics: &Metrics) -> anyhow::Result<()> {
             .query(surreal_expr!(
                 "UPSERT type::record('metric_hourly', {}) SET flag = {}, environment = {}, app_name = {}, \
                  hour = <datetime>{}, yes = (yes ?? 0) + {}, no = (no ?? 0) + {} RETURN NONE",
-                key, flag, env, app, hour, yes, no
+                key,
+                flag,
+                env,
+                app,
+                hour,
+                yes,
+                no
             ))
             .await?;
     }
@@ -193,7 +199,8 @@ pub async fn flush(store: &Store, metrics: &Metrics) -> anyhow::Result<()> {
     // New unknown names and apps only while the environment (and app) is under its ceiling;
     // rows that already exist always update.
     // surreal_expr! takes each argument by value, as one token: hence the copies below.
-    let (max_env, max_app, max_apps, max_count) = (MAX_UNKNOWN_ROWS_PER_ENV, MAX_UNKNOWN_ROWS_PER_APP, MAX_APP_ROWS_PER_ENV, MAX_COUNT);
+    let (max_env, max_app, max_apps, max_count) =
+        (MAX_UNKNOWN_ROWS_PER_ENV, MAX_UNKNOWN_ROWS_PER_APP, MAX_APP_ROWS_PER_ENV, MAX_COUNT);
     for ((name, env, app), n) in b.unknown {
         let key = format!("{name}|{env}|{app}");
         let (key2, env2, env3, app2) = (key.clone(), env.clone(), env.clone(), app.clone());
@@ -204,7 +211,18 @@ pub async fn flush(store: &Store, metrics: &Metrics) -> anyhow::Result<()> {
                         AND count(SELECT id FROM unknown_flag WHERE environment = {} AND app_name = {}) < {}) { \
                  UPSERT type::record('unknown_flag', {}) SET name = {}, environment = {}, app_name = {}, \
                  last_seen_at = time::now(), count = math::min([(count ?? 0) + {}, {}]) RETURN NONE }",
-                key2, env2, max_env, env3, app2, max_app, key, name, env, app, n, max_count
+                key2,
+                env2,
+                max_env,
+                env3,
+                app2,
+                max_app,
+                key,
+                name,
+                env,
+                app,
+                n,
+                max_count
             ))
             .await?;
     }
@@ -218,7 +236,15 @@ pub async fn flush(store: &Store, metrics: &Metrics) -> anyhow::Result<()> {
                     OR count(SELECT id FROM client_app WHERE environment = {}) < {} { \
                  UPSERT type::record('client_app', {}) SET app_name = {}, environment = {}, instance_id = {}, \
                  sdk_version = IF {} = '' THEN sdk_version ELSE {} END, last_seen_at = time::now() RETURN NONE }",
-                key2, env2, max_apps, key, app, env, instance, sdk, sdk_again
+                key2,
+                env2,
+                max_apps,
+                key,
+                app,
+                env,
+                instance,
+                sdk,
+                sdk_again
             ))
             .await?;
     }
