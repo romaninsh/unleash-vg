@@ -87,8 +87,11 @@ export function Stress(props: {
   limits: { concurrency: number; durationSec: number };
 }) {
   const [mode, setMode] = useState<'frontend' | 'client' | 'mixed'>('frontend');
-  const [concurrency, setConcurrency] = useState(32);
-  const [duration, setDuration] = useState(20);
+  const [wantConcurrency, setConcurrency] = useState(32);
+  const [wantDuration, setDuration] = useState(20);
+  // a deployed bench caps both (server/stress.ts LIMITS)
+  const concurrency = Math.min(wantConcurrency, props.limits.concurrency);
+  const duration = Math.min(wantDuration, props.limits.durationSec);
   const [brandMode, setBrandMode] = useState<'random' | 'selected' | 'none'>('random');
   const [customerMode, setCustomerMode] = useState<'range' | 'uuid'>('range');
   const [customerMax, setCustomerMax] = useState(1_000_000);

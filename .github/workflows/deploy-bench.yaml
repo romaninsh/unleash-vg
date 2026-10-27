@@ -1,0 +1,80 @@
+# The test bench (testbench/, against the deployed SDK API) to Cloud Run as unleash-vg-bench, on
+# every merge to main that changes it. Auth: Workload Identity Federation as github-unleash-vg
+# (vantage-terraform's module "unleash_vg"); its SDK tokens from Secret Manager.
+name: deploy-bench
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'testbench/**'
+      - '.github/workflows/deploy-bench.yaml'
+  workflow_dispatch:
+
+permissions: {}
+
+# A second merge waits for the running deploy; neither is cancelled.
+concurrency:
+  group: deploy-bench
+  cancel-in-progress: false
+
+env:
+  PROJECT: inlaid-agility-461020-e4
+  REGION: europe-west2
+  SERVICE: unleash-vg-bench
+  IMAGE: europe-west2-docker.pkg.dev/inlaid-agility-461020-e4/cloud-run-source-deploy/unleash-vg-bench
+  # Cloud Run's deterministic URL (<name>-<project number>.<region>.run.app)
+  URL: https://unleash-vg-bench-129027965449.europe-west2.run.app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/unleash-vg-main
+          service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Build and push the image
+        run: |
+          gcloud auth configure-docker europe-west2-docker.pkg.dev --quiet
+          docker build -t "$IMAGE:$GITHUB_SHA" -t "$IMAGE:latest" testbench
+          docker push "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:latest"
+
+      # Scales to zero, one instance at most. The stress test is capped (4 workers, 30 s), enough
+      # to watch a flag change land, not enough to load-test the SDK API from a public page.
+      - name: Deploy
+        run: |
+          gcloud run deploy "$SERVICE" --project "$PROJECT" --region "$REGION" \
+            --image "$IMAGE:$GITHUB_SHA" \
+            --service-account "unleash-vg-runtime@$PROJECT.iam.gserviceaccount.com" \
+            --min-instances 0 --max-instances 1 --cpu 1 --memory 256Mi --cpu-boost --timeout 3600 \
+            --set-env-vars "BENCH_STRESS_MAX_WORKERS=4,BENCH_STRESS_MAX_SECONDS=30" \
+            --set-secrets "TESTBENCH_TOKENS=unleash-vg-bench-tokens:latest"
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        id: invoker
+        with:
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/unleash-vg-main
+          service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
+          token_format: id_token
+          id_token_audience: ${{ env.URL }}
+          id_token_include_email: true
+      - name: Smoke check
+        env:
+          ID_TOKEN: ${{ steps.invoker.outputs.id_token }}
+        run: |
+          auth=(-H "Authorization: Bearer $ID_TOKEN")
+          curl -fsS -m 60 "${auth[@]}" "$URL/" | grep -q 'id="root"'
+          limits="$(curl -fsS -m 30 "${auth[@]}" "$URL/bench/stress" | jq -c .limits)"
+          echo "stress limits: $limits"
+          [ "$limits" = '{"concurrency":4,"durationSec":30}' ]

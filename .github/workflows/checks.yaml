@@ -2,19 +2,18 @@
 # job it needs failed or was cancelled (skipped is fine). `stack` runs the service's fmt, clippy
 # and tests when service/ changed, then the app for real: SurrealDB, the flag service from that
 # build and vantage-server serving api/flags.yaml under the `ci` profile, then the database rules,
-# preview parity, the web probes and the audit-log leak check.
+# preview parity, the web probes and the audit-log leak check. Pull requests only: a merge to main
+# has already passed them, and main runs only the deploys.
 name: checks
 
 on:
   pull_request:
-  push:
-    branches: [main]
 
 permissions: {}
 
 concurrency:
   group: checks-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 jobs:
   changes:
