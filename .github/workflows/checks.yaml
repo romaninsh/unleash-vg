@@ -118,9 +118,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
         with:
           components: clippy, rustfmt
+      # saved even when a later step fails (a probe failing shouldn't cost the next run its build);
+      # the shared key doesn't change with the job's name
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: service
+          shared-key: service
+          cache-on-failure: true
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: 25
@@ -185,7 +189,7 @@ jobs:
           docker run -d --name vantage --network host \
             -v "$PWD:/app/project:ro" -v "$PWD/web/flags/dist:/app/web:ro" \
             -e VANTAGE_API=flags -e VANTAGE_PROFILE=ci \
-            romaninsh/vantage-server:1.8.5 --static /app/web
+            romaninsh/vantage-server:1.8.6 --static /app/web
           for _ in $(seq 60); do curl -fs "$API/v1/ready" > /dev/null && exit 0; sleep 1; done
           echo "vantage-server did not report ready in 60 s; its last lines:"; docker logs --tail 30 vantage 2>&1; exit 1
 
