@@ -1,7 +1,8 @@
 # PR checks. `changes` decides what runs; `summary` is the one required check and fails when a
-# job it needs failed or was cancelled (skipped is fine). `stack` runs the app for real: SurrealDB,
-# the flag service from source and vantage-server serving api/flags.yaml under the `ci` profile,
-# then the database rules, preview parity, the web probes and the audit-log leak check.
+# job it needs failed or was cancelled (skipped is fine). `stack` runs the service's fmt, clippy
+# and tests when service/ changed, then the app for real: SurrealDB, the flag service from that
+# build and vantage-server serving api/flags.yaml under the `ci` profile, then the database rules,
+# preview parity, the web probes and the audit-log leak check.
 name: checks
 
 on:
@@ -54,33 +55,6 @@ jobs:
               - 'application.yaml'
               - '.github/workflows/checks.yaml'
 
-  service:
-    needs: changes
-    if: needs.changes.outputs.service == 'true'
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    permissions:
-      contents: read
-    defaults:
-      run:
-        working-directory: service
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          persist-credentials: false
-      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
-        with:
-          components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
-        with:
-          workspaces: service
-      - uses: taiki-e/install-action@5488ac5a951645ce95062214902ac4b6bc1a1037 # v2.87.32
-        with:
-          tool: nextest
-      - run: cargo fmt --check
-      - run: cargo clippy --all-features --all-targets -- -D warnings
-      - run: cargo nextest run --all-features
-
   web:
     needs: changes
     if: needs.changes.outputs.web == 'true'
@@ -128,7 +102,7 @@ jobs:
     needs: changes
     if: needs.changes.outputs.stack == 'true'
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     permissions:
       contents: read
     env:
@@ -136,11 +110,14 @@ jobs:
       API: http://127.0.0.1:8090
       FLAG_SERVICE: http://127.0.0.1:4380
       TOKEN_CACHE_SECS: '1'
+      SERVICE_CHANGED: ${{ needs.changes.outputs.service }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          components: clippy, rustfmt
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
           workspaces: service
@@ -149,6 +126,25 @@ jobs:
           node-version: 25
           cache: npm
           cache-dependency-path: web/flags/package-lock.json
+
+      # the service's own checks, first so a formatting or lint slip fails in minutes; only when
+      # service/ changed. The flag service below runs from the same debug build.
+      - uses: taiki-e/install-action@5488ac5a951645ce95062214902ac4b6bc1a1037 # v2.87.32
+        if: env.SERVICE_CHANGED == 'true'
+        with:
+          tool: nextest
+      - name: Service fmt
+        if: env.SERVICE_CHANGED == 'true'
+        working-directory: service
+        run: cargo fmt --check
+      - name: Service clippy
+        if: env.SERVICE_CHANGED == 'true'
+        working-directory: service
+        run: cargo clippy --all-features --all-targets -- -D warnings
+      - name: Service tests
+        if: env.SERVICE_CHANGED == 'true'
+        working-directory: service
+        run: cargo nextest run --all-features
 
       - name: Generate the job's internal token
         run: |
@@ -172,8 +168,8 @@ jobs:
       - name: Build and start the flag service
         working-directory: service
         run: |
-          cargo build --release
-          SURREAL_URL=ws://127.0.0.1:8000 nohup target/release/flag-service > "$RUNNER_TEMP/flag-service.log" 2>&1 &
+          cargo build --all-features
+          SURREAL_URL=ws://127.0.0.1:8000 nohup target/debug/flag-service > "$RUNNER_TEMP/flag-service.log" 2>&1 &
           for _ in $(seq 60); do curl -fs "$FLAG_SERVICE/health" > /dev/null && exit 0; sleep 1; done
           echo "the flag service did not answer in 60 s; its last lines:"; tail -20 "$RUNNER_TEMP/flag-service.log"; exit 1
 
@@ -218,7 +214,7 @@ jobs:
           fi
 
   summary:
-    needs: [changes, service, web, workflows, stack]
+    needs: [changes, web, workflows, stack]
     if: always()
     runs-on: ubuntu-24.04
     timeout-minutes: 5
