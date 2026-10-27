@@ -22,7 +22,7 @@ env:
   PROJECT: inlaid-agility-461020-e4
   REGION: europe-west2
   SERVICE: unleash-vg-sdk
-  IMAGE: europe-west2-docker.pkg.dev/inlaid-agility-461020-e4/cloud-run-source-deploy/unleash-vg-sdk
+  IMAGE: europe-west2-docker.pkg.dev/inlaid-agility-461020-e4/unleash-vg/sdk
   # Cloud Run's deterministic URL for the service (<name>-<project number>.<region>.run.app)
   URL: https://unleash-vg-sdk-129027965449.europe-west2.run.app
 
