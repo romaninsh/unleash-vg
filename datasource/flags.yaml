@@ -1,10 +1,11 @@
 # yaml-language-server: $schema=./datasource-schema-1.json
-# Local SurrealDB, started from composer.yaml (service `surrealdb`). Rules: tests/schema.surql + tests/events.surql.
+# SurrealDB: composer.yaml's `surrealdb` locally, SurrealDB Cloud in prod (application.yaml
+# profiles). Rules: tests/schema.surql + tests/events.surql.
 type: surreal-db
-description: Feature flags, brands, rules, API tokens, users, usage metrics, settings and the audit log (local SurrealDB).
-url: cbor://root:root@surrealdb:8000
-namespace: flags
-database: flags
+description: Feature flags, brands, rules, API tokens, users, usage metrics, settings and the audit log.
+url: ${secret.surreal_url}
+namespace: ${profile.surreal_ns}
+database: ${profile.surreal_db}
 # Customer IDs are numbers separated by commas. Checked on every write, from the app, the
 # web API and data scripts alike.
 invariants:

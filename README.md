@@ -41,10 +41,12 @@ Data lives in SurrealDB.
 
 You need Docker, Node 22 or later, and [Vantage](https://vantage-ui.com) (nightly).
 
-1. Create `.env` with the token the admin app reads compiled flags from the SDK API with:
+1. Create `.env`, the `local` profile in `application.yaml`: where the database and the SDK API
+   are, and the token the admin app reads compiled flags from the SDK API with:
 
    ```
-   echo "SECRET_INTERNAL_TOKEN=$(openssl rand -hex 32)" > .env
+   printf '%s\n' SECRET_SURREAL_URL=cbor://root:root@surrealdb:8000 SURREAL_NS=flags SURREAL_DB=flags \
+     FLAG_SERVICE_URL=http://127.0.0.1:4380 "SECRET_INTERNAL_TOKEN=$(openssl rand -hex 32)" > .env
    ```
 
 2. Open this folder in Vantage. It starts SurrealDB and the SDK API from `composer.yaml`.

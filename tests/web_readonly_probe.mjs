@@ -1,32 +1,21 @@
-// tests/web_readonly_probe.mjs <api-url> - the read views refuse writes (even from an admin)
-// and answer quickly. Every write targets a throwaway flag, zz-readonly-probe, which the probe
-// creates first; remove it afterwards with:
-//   echo "DELETE flag:\`zz-readonly-probe\`;" | tests/surql.sh
-const ws = new WebSocket(process.argv[2].replace(/^http/, "ws") + "/v1/ws");
-let id = 0;
-const pending = new Map();
-ws.onmessage = (m) => {
-  const f = JSON.parse(m.data);
-  if (f.id && pending.has(f.id)) { pending.get(f.id)(f); pending.delete(f.id); }
-};
-const send = (f) => new Promise((res) => { f.id = ++id; pending.set(f.id, res); ws.send(JSON.stringify(f)); setTimeout(() => res({ t: "timeout" }), 10000); });
-await new Promise((r) => (ws.onopen = r));
-await send({ t: "hello", protocol: 1, token: "admin@example.com:demo" });
+// tests/web_readonly_probe.mjs <api-url> <flag-service-url> - the read views refuse writes, even
+// from an admin, as read-only, and answer within the reply wait. Every write targets a throwaway
+// flag that the probe creates first and deletes at the end.
+import { connect, ok, refused, done } from "./probe.mjs";
 
-const F = "zz-readonly-probe";
-const made = await send({ t: "flash", table: "flag_edits", patch: { id: F, name: F, description: "probe", edit_scope: "all", created_by: "probe" } });
-console.log("throwaway flag:".padEnd(26), made.t, made.message ?? "");
+const admin = await connect(process.argv[2], "admin@example.com:demo");
+const F = `zz-readonly-probe-${Date.now().toString(36)}`;
+ok("create the throwaway flag", await admin.send({ t: "flash", table: "flag_edits", patch: {
+  id: F, name: F, description: "probe", edit_scope: "all", created_by: "admin@example.com" } }));
 
-let bad = 0;
 for (const [table, rid, patch] of [
   ["flags", `flag:${F}`, { description: "hacked" }],
   ["flags", `flag:${F}`, { stale: true, tags: "x", name_sort: "x" }],
-  ["environments", `flag_env:${F}@production`, { is_on: true }],
-  ["environments", `flag_env:${F}@production`, { rule_rollout: 5, rule_allowlist: "x", rule_revision: 99 }],
-  ["environments", `flag_env:${F}@production`, { detail: "x", seen: "x", default_label: "x" }],
-  ["overrides", null, { scope: `${F}@uat`, rollout: 5 }],
-  ["flags", null, { name: "zz-readonly-probe-2" }],
+  ["flags", null, { name: `${F}-2` }],
+  ["environments", `flag_env:${F}@production`, { enabled: true }],
+  ["environments", `flag_env:${F}@production`, { default_rollout: 5, default_allowlist: "x", revision: 99 }],
   ["environments", null, { flag_name: F }],
+  ["overrides", null, { scope: `${F}@uat`, rollout: 5 }],
   ["archived", `flag:${F}`, { name: "renamed" }],
   // invalid date: if this ever passes the API's read-only check, SurrealDB still refuses it
   ["history", null, { created_at: "not-a-date", summary: "forged entry" }],
@@ -34,34 +23,28 @@ for (const [table, rid, patch] of [
   ["config", "settings:main", { unused_flag_days: 1 }],
   ["flag_names", null, { name: "zz-probe" }],
   ["brands", "brand:bank-a", { display_name: "hacked" }],
-  // read-only by naming (like environments): the database refuses the unknown field
-  ["compiled", `flag_env:${F}@production`, { served: "{}" }],
-  ["usage", `flag_env:${F}@production`, { usage_day: "x", seen_text: "x" }],
+  ["compiled", `flag_env:${F}@production`, { feature: "{}" }],
+  ["usage", null, { flag: F, environment: "production", app_name: "x" }],
 ]) {
-  const r = await send({ t: "flash", table, ...(rid && { rid }), patch });
-  // environments relies on the database refusing (table/web_env.yaml); the rest must be
-  // refused by the API itself as read-only
-  const byNaming = ["environments", "compiled", "usage"].includes(table);
-  if (r.t === "flashed" || (!byNaming && !/read-only/.test(r.message ?? ""))) bad++;
-  console.log(`write to ${table}:`.padEnd(26), Object.keys(patch).join(","), "->", r.t === "flashed" ? "ACCEPTED (bad)" : `refused (${r.t}: ${(r.message ?? "").slice(0, 70)})`);
+  const r = await admin.send({ t: "flash", table, ...(rid && { rid }), patch });
+  refused(`write to ${table}: ${Object.keys(patch).join(",")}`, r, /read-only/);
 }
 for (const [table, rid] of [["flags", `flag:${F}`], ["environments", `flag_env:${F}@uat`], ["archived", `flag:${F}`]]) {
-  const r = await send({ t: "delete", table, rid });
-  if (r.t === "flashed" || r.t === "deleted") bad++;
-  console.log(`delete via ${table}:`.padEnd(26), r.t === "rejected" ? `refused (${(r.message ?? "").slice(0, 70)})` : `${r.t} (bad)`);
+  refused(`delete via ${table}`, await admin.send({ t: "delete", table, rid }), /read-only/);
 }
 for (const [label, frame] of [
-  ["flag list, first 200", { t: "open_table", table: "flags", sort: ["name_sort", "asc"], limit: 200 }],
-  ["one flag", { t: "open_table", table: "flags", where: [["name", "eq", "debit-card-payments"]] }],
-  ["one environment card", { t: "open_table", table: "environments", where: [["flag_name", "eq", "debit-card-payments"], ["env_key", "eq", "production"]] }],
-  ["overrides of a card", { t: "open_table", table: "overrides", where: [["scope", "eq", "debit-card-payments@production"]] }],
-  ["history of a flag", { t: "open_table", table: "history", where: [["flag", "eq", "debit-card-payments"]], sort: ["created_at", "desc"], limit: 50 }],
-  ["archived", { t: "open_table", table: "archived" }],
+  ["read: flag list, first 200", { t: "open_table", table: "flags", sort: ["name_sort", "asc"], limit: 200 }],
+  ["read: one flag", { t: "open_table", table: "flags", where: [["name", "eq", "debit-card-payments"]] }],
+  ["read: one environment card", { t: "open_table", table: "environments", where: [["flag_name", "eq", "debit-card-payments"], ["env_key", "eq", "production"]] }],
+  ["read: overrides of a card", { t: "open_table", table: "overrides", where: [["scope", "eq", "debit-card-payments@production"]] }],
+  ["read: history of a flag", { t: "open_table", table: "history", where: [["flag", "eq", "debit-card-payments"]], sort: ["created_at", "desc"], limit: 50 }],
+  ["read: archived", { t: "open_table", table: "archived" }],
 ]) {
-  const t0 = performance.now();
-  const r = await send(frame);
-  console.log(label.padEnd(26), r.t, `${(r.ids ?? []).length} rows`, `${Math.round(performance.now() - t0)} ms`);
+  ok(label, await admin.send(frame));
 }
-console.log(bad ? `FAIL: ${bad} write(s) accepted` : "OK: every write refused");
-ws.close();
-process.exitCode = bad ? 1 : 0;
+
+ok("clean-up: archive", await admin.send({ t: "flash", table: "flag_edits", rid: `flag:${F}`,
+  patch: { archived: true, archived_by: "admin@example.com" } }));
+ok("clean-up: delete", await admin.send({ t: "delete", table: "flag_deletes", rid: `flag:${F}` }));
+admin.close();
+done();

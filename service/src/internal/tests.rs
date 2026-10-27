@@ -9,7 +9,9 @@ use crate::state::{EnvSnapshot, Feature, Served};
 
 fn served() -> Served {
     let served = Served::default();
-    for (env, flags) in [("production", [("b-flag", true), ("a-flag", false)]), ("uat", [("a-flag", true), ("b-flag", true)])] {
+    for (env, flags) in
+        [("production", [("b-flag", true), ("a-flag", false)]), ("uat", [("a-flag", true), ("b-flag", true)])]
+    {
         let features: Vec<Feature> = flags
             .iter()
             .map(|(name, switch)| Feature {
@@ -20,7 +22,8 @@ fn served() -> Served {
             })
             .collect();
         let names = features.iter().map(|f| f.name.clone()).collect();
-        let snapshot = EnvSnapshot { revision: 1, features, names, engine: EngineState::initial_state(chrono::Utc::now()) };
+        let snapshot =
+            EnvSnapshot { revision: 1, features, names, engine: EngineState::initial_state(chrono::Utc::now()) };
         served.envs.write().unwrap().insert(env.into(), Arc::new(snapshot));
     }
     served
@@ -35,7 +38,10 @@ fn bearer(value: &str) -> HeaderMap {
 #[test]
 fn every_served_feature_is_one_row_ordered_by_environment_then_flag() {
     let ids: Vec<_> = rows(&served(), None, None).iter().map(|r| r["id"].clone()).collect();
-    assert_eq!(ids, vec![json!("a-flag@production"), json!("b-flag@production"), json!("a-flag@uat"), json!("b-flag@uat")]);
+    assert_eq!(
+        ids,
+        vec![json!("a-flag@production"), json!("b-flag@production"), json!("a-flag@uat"), json!("b-flag@uat")]
+    );
 }
 
 #[test]

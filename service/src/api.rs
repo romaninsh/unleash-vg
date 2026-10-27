@@ -75,10 +75,7 @@ pub fn router(app: App) -> Router {
             .route("/api/client/metrics/bulk", post(client_metrics_bulk))
             .route("/edge/validate", post(edge_validate));
     }
-    routes
-        .merge(frontend)
-        .fallback(|| async { error(StatusCode::NOT_FOUND, "Not found") })
-        .with_state(app)
+    routes.merge(frontend).fallback(|| async { error(StatusCode::NOT_FOUND, "Not found") }).with_state(app)
 }
 
 fn error(status: StatusCode, message: &str) -> Response {
@@ -136,7 +133,8 @@ fn feature_query(params: &[(String, String)], env: &str) -> FeatureQuery {
         }
     }
     let other_project = projects.iter().any(|p| p != "default");
-    let normalised = format!("namePrefix={};tag={:?};project={:?}", name_prefix.clone().unwrap_or_default(), tags, projects);
+    let normalised =
+        format!("namePrefix={};tag={:?};project={:?}", name_prefix.clone().unwrap_or_default(), tags, projects);
     let hash = hex::encode(&Sha256::digest(normalised.as_bytes())[..8]);
     let mut echo = json!({ "environment": env, "project": if projects.is_empty() { vec!["default".to_string()] } else { projects.into_iter().collect() } });
     if let Some(p) = &name_prefix {
@@ -239,7 +237,10 @@ async fn client_metrics_bulk(State(app): State<App>, headers: HeaderMap, body: B
         Err(r) => return r,
     };
     if bulk.metrics.len() > EDGE_MAX_METRICS || bulk.applications.len() > EDGE_MAX_APPLICATIONS {
-        return error(StatusCode::BAD_REQUEST, &format!("At most {EDGE_MAX_METRICS} metrics and {EDGE_MAX_APPLICATIONS} applications per post"));
+        return error(
+            StatusCode::BAD_REQUEST,
+            &format!("At most {EDGE_MAX_METRICS} metrics and {EDGE_MAX_APPLICATIONS} applications per post"),
+        );
     }
     for a in &bulk.applications {
         if let Some(name) = a["appName"].as_str() {
@@ -351,13 +352,25 @@ async fn frontend(app: &App, headers: &HeaderMap, fields: Vec<(String, Value)>, 
     ([(header::CACHE_CONTROL, "no-cache")], Json(json!({ "toggles": toggles }))).into_response()
 }
 
-async fn frontend_get(State(app): State<App>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, Query(params): Params) -> Response {
+async fn frontend_get(
+    State(app): State<App>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    Query(params): Params,
+) -> Response {
     let fields = params.into_iter().map(|(k, v)| (k, Value::String(v))).collect();
     frontend(&app, &headers, fields, &peer).await
 }
 
-async fn frontend_post(State(app): State<App>, ConnectInfo(peer): ConnectInfo<SocketAddr>, headers: HeaderMap, body: Bytes) -> Response {
-    let req: Value = if body.is_empty() { json!({}) } else {
+async fn frontend_post(
+    State(app): State<App>,
+    ConnectInfo(peer): ConnectInfo<SocketAddr>,
+    headers: HeaderMap,
+    body: Bytes,
+) -> Response {
+    let req: Value = if body.is_empty() {
+        json!({})
+    } else {
         match parse_json(&body) {
             Ok(v) => v,
             Err(r) => return r,

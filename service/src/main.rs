@@ -9,7 +9,9 @@
 //!                                     store an existing Unleash secret verbatim (spec 09 step 3)
 //!
 //! Environment: SURREAL_URL (ws://127.0.0.1:8000), SURREAL_NS / SURREAL_DB (flags),
-//! SURREAL_USER / SURREAL_PASS (root), PORT (4380), METRICS_FLUSH_SECS (30), RUST_LOG (info),
+//! SURREAL_USER / SURREAL_PASS (root), SURREAL_AUTH (the level they sign in at: root, namespace or
+//! database; root), PORT (4380), METRICS_FLUSH_SECS (30), TOKEN_CACHE_SECS (how long a checked
+//! API token is trusted before it is checked again; 30), RUST_LOG (info),
 //! EDGE_ENDPOINTS (`true` serves /edge/validate and /api/client/metrics/bulk for Unleash Edge),
 //! INTERNAL_TOKEN (bearer token of /internal/features, what the admin app reads; unset = off).
 
@@ -29,7 +31,7 @@ use axum::http::{HeaderName, HeaderValue};
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::set_header::SetResponseHeaderLayer;
 
-use crate::store::{DbConfig, Store};
+use crate::store::{AuthLevel, DbConfig, Store};
 
 fn env_or(name: &str, default: &str) -> String {
     std::env::var(name).unwrap_or_else(|_| default.to_string())
@@ -48,6 +50,7 @@ async fn main() -> anyhow::Result<()> {
         database: env_or("SURREAL_DB", "flags"),
         user: env_or("SURREAL_USER", "root"),
         pass: env_or("SURREAL_PASS", "root"),
+        auth: AuthLevel::from_env_value(&env_or("SURREAL_AUTH", "root"))?,
     }));
 
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -65,7 +68,9 @@ async fn main() -> anyhow::Result<()> {
             println!("imported {kind} token \"{name}\" for {env}");
             Ok(())
         }
-        _ => anyhow::bail!("usage: flag-service [create-token <name> <backend|frontend> <env> | import-token <name> <backend|frontend|client> <env> <secret>]"),
+        _ => anyhow::bail!(
+            "usage: flag-service [create-token <name> <backend|frontend> <env> | import-token <name> <backend|frontend|client> <env> <secret>]"
+        ),
     }
 }
 
@@ -95,7 +100,11 @@ async fn serve(store: Arc<Store>) -> anyhow::Result<()> {
     if internal_token.is_none() {
         tracing::info!("INTERNAL_TOKEN unset: /internal/features is off");
     }
-    let app = api::router(api::App { store, served, tokens: Arc::default(), metrics, edge, internal_token })
+    let cache_secs: u64 = env_or("TOKEN_CACHE_SECS", "30")
+        .parse()
+        .map_err(|e| anyhow::anyhow!("TOKEN_CACHE_SECS must be a number of seconds: {e}"))?;
+    let tokens = Arc::new(tokens::Tokens::new(Duration::from_secs(cache_secs)));
+    let app = api::router(api::App { store, served, tokens, metrics, edge, internal_token })
         .layer(SetResponseHeaderLayer::if_not_present(
             HeaderName::from_static("x-unleash-version"),
             HeaderValue::from_static(concat!("flag-service/", env!("CARGO_PKG_VERSION"))),

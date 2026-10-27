@@ -4,24 +4,29 @@
 
 use std::collections::HashMap;
 
+use axum::Json;
 use axum::extract::{Query, State};
 use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
-use axum::Json;
 use serde_json::{Value, json};
 use sha2::{Digest, Sha256};
 
 use crate::api::App;
 use crate::state::Served;
 
-pub async fn features(State(app): State<App>, headers: HeaderMap, Query(q): Query<HashMap<String, String>>) -> Response {
+pub async fn features(
+    State(app): State<App>,
+    headers: HeaderMap,
+    Query(q): Query<HashMap<String, String>>,
+) -> Response {
     let Some(token) = app.internal_token.as_deref() else {
         return (StatusCode::NOT_FOUND, Json(json!({ "message": "Not found" }))).into_response();
     };
     if !authorized(&headers, token) {
         return (StatusCode::UNAUTHORIZED, Json(json!({ "message": "Unauthorized" }))).into_response();
     }
-    Json(rows(&app.served, q.get("env_key").map(String::as_str), q.get("flag_name").map(String::as_str))).into_response()
+    Json(rows(&app.served, q.get("env_key").map(String::as_str), q.get("flag_name").map(String::as_str)))
+        .into_response()
 }
 
 /// One row per served feature, by environment then flag; `feature` is the JSON as SDKs get it.
@@ -31,7 +36,8 @@ pub fn rows(served: &Served, env_key: Option<&str>, flag_name: Option<&str>) -> 
     keys.sort();
     let mut out = Vec::new();
     for env in keys {
-        let mut features: Vec<_> = envs[env].features.iter().filter(|f| flag_name.is_none_or(|n| n == f.name)).collect();
+        let mut features: Vec<_> =
+            envs[env].features.iter().filter(|f| flag_name.is_none_or(|n| n == f.name)).collect();
         features.sort_by(|a, b| a.name.cmp(&b.name));
         for f in features {
             out.push(json!({

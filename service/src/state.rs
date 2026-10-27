@@ -77,7 +77,8 @@ pub async fn refresh_once(store: &Store, served: &Served) -> anyhow::Result<()> 
 
     let s = store.query(surreal_expr!("SELECT frontend_cors_origins FROM ONLY settings:main")).await?;
     let origins = s["frontend_cors_origins"].as_str().unwrap_or("");
-    let cors_origins = origins.split([',', ' ', '\n']).map(str::trim).filter(|o| !o.is_empty()).map(String::from).collect();
+    let cors_origins =
+        origins.split([',', ' ', '\n']).map(str::trim).filter(|o| !o.is_empty()).map(String::from).collect();
     *served.settings.write().expect("lock") = Settings { cors_origins };
     Ok(())
 }
@@ -111,7 +112,10 @@ async fn load_env(store: &Store, env: &str, revision: i64) -> anyhow::Result<Env
     for o in override_rows.as_array().into_iter().flatten() {
         let (Some(scope), Some(brand)) = (o["scope"].as_str(), o["brand"].as_str()) else { continue };
         let flag = scope.rsplit_once('@').map_or(scope, |(f, _)| f);
-        overrides.entry(flag.to_string()).or_default().push(BrandRule { brand: brand.to_string(), rule: rule(o, "rollout", "allowlist") });
+        overrides
+            .entry(flag.to_string())
+            .or_default()
+            .push(BrandRule { brand: brand.to_string(), rule: rule(o, "rollout", "allowlist") });
     }
 
     let mut features = Vec::new();

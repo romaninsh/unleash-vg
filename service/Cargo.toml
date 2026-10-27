@@ -5,6 +5,10 @@ edition = "2024"
 description = "Unleash-compatible SDK API (spec 04) over the Flag Service SurrealDB database"
 publish = false
 
+[lints.clippy]
+# handlers return early with `Result<_, Response>`, axum's usual shape; a Response is 128 bytes
+result_large_err = "allow"
+
 [dependencies]
 # Vantage framework (github.com/romaninsh/vantage), pinned: data access to SurrealDB.
 vantage-surrealdb = { git = "https://github.com/romaninsh/vantage", rev = "27ad2f38325d384f01cf608e0a6df2b94522d054" }
