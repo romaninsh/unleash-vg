@@ -1,0 +1,232 @@
+# PR checks. `changes` decides what runs; `summary` is the one required check and fails when a
+# job it needs failed or was cancelled (skipped is fine). `stack` runs the app for real: SurrealDB,
+# the flag service from source and vantage-server serving api/flags.yaml under the `ci` profile,
+# then the database rules, preview parity, the web probes and the audit-log leak check.
+name: checks
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions: {}
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      service: ${{ steps.filter.outputs.service }}
+      web: ${{ steps.filter.outputs.web }}
+      workflows: ${{ steps.filter.outputs.workflows }}
+      stack: ${{ steps.filter.outputs.stack }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          filters: |
+            service:
+              - 'service/**'
+            web:
+              - 'web/**'
+              - 'api/**'
+              - 'table/**'
+            workflows:
+              - '.github/**'
+            stack:
+              - 'service/**'
+              - 'web/**'
+              - 'api/**'
+              - 'table/**'
+              - 'datasource/**'
+              - 'script/**'
+              - 'tests/**'
+              - 'application.yaml'
+              - '.github/workflows/checks.yaml'
+
+  service:
+    needs: changes
+    if: needs.changes.outputs.service == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: service
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: service
+      - uses: taiki-e/install-action@5488ac5a951645ce95062214902ac4b6bc1a1037 # v2.87.32
+        with:
+          tool: nextest
+      - run: cargo fmt --check
+      - run: cargo clippy --all-features --all-targets -- -D warnings
+      - run: cargo nextest run --all-features
+
+  web:
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: web/flags
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/flags/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  workflows:
+    needs: changes
+    if: needs.changes.outputs.workflows == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: actionlint
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+        run: |
+          curl -fsSL "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz" \
+            | tar -xz actionlint
+          ./actionlint -color
+
+  stack:
+    needs: changes
+    if: needs.changes.outputs.stack == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      SURREAL_HTTP: http://127.0.0.1:8000
+      API: http://127.0.0.1:8090
+      FLAG_SERVICE: http://127.0.0.1:4380
+      TOKEN_CACHE_SECS: '1'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: service
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 25
+          cache: npm
+          cache-dependency-path: web/flags/package-lock.json
+
+      - name: Generate the job's internal token
+        run: |
+          token="$(openssl rand -hex 32)"
+          echo "::add-mask::$token"
+          echo "INTERNAL_TOKEN=$token" >> "$GITHUB_ENV"
+
+      # a step, not a service container: services can't be given the `start` command line
+      - name: Start SurrealDB
+        run: |
+          docker run -d --name surrealdb -p 8000:8000 surrealdb/surrealdb:v3.2.4 start --user root --pass root memory
+          for _ in $(seq 60); do curl -fs "$SURREAL_HTTP/health" > /dev/null && exit 0; sleep 1; done
+          echo "SurrealDB at $SURREAL_HTTP did not answer in 60 s"; exit 1
+
+      - name: Load the schema and the demo data
+        run: |
+          for f in schema seed events; do tests/surql.sh "tests/$f.surql" -q; done
+          mkdir -p private
+          tests/sync_web_users.sh
+
+      - name: Build and start the flag service
+        working-directory: service
+        run: |
+          cargo build --release
+          SURREAL_URL=ws://127.0.0.1:8000 nohup target/release/flag-service > "$RUNNER_TEMP/flag-service.log" 2>&1 &
+          for _ in $(seq 60); do curl -fs "$FLAG_SERVICE/health" > /dev/null && exit 0; sleep 1; done
+          echo "the flag service did not answer in 60 s; its last lines:"; tail -20 "$RUNNER_TEMP/flag-service.log"; exit 1
+
+      - name: Build the web app
+        working-directory: web/flags
+        run: npm ci && npm run build
+
+      - name: Start vantage-server (profile ci)
+        run: |
+          # the ci profile's env file (application.yaml); the runner is thrown away after the job
+          printf '%s\n' "SECRET_SURREAL_URL=cbor://root:root@127.0.0.1:8000" SURREAL_NS=flags SURREAL_DB=flags \
+            "FLAG_SERVICE_URL=$FLAG_SERVICE" "SECRET_INTERNAL_TOKEN=$INTERNAL_TOKEN" > .env.ci
+          docker run -d --name vantage --network host \
+            -v "$PWD:/app/project:ro" -v "$PWD/web/flags/dist:/app/web:ro" \
+            -e VANTAGE_API=flags -e VANTAGE_PROFILE=ci \
+            romaninsh/vantage-server:1.8.5 --static /app/web
+          for _ in $(seq 60); do curl -fs "$API/v1/ready" > /dev/null && exit 0; sleep 1; done
+          echo "vantage-server did not report ready in 60 s; its last lines:"; docker logs --tail 30 vantage 2>&1; exit 1
+
+      - name: Database rules
+        run: tests/rules_test.sh
+      - name: Preview parity
+        run: node tests/preview_parity.ts "$FLAG_SERVICE"
+      - name: Web probes
+        run: |
+          status=0
+          for p in tests/web_*_probe.mjs; do
+            echo "::group::$p"
+            node "$p" "$API" "$FLAG_SERVICE" || status=1
+            echo "::endgroup::"
+          done
+          exit $status
+      - name: Audit log leak check
+        run: tests/audit_leak_check.sh
+
+      - name: The internal token stayed out of the service logs
+        if: always()
+        run: |
+          docker logs vantage > "$RUNNER_TEMP/vantage.log" 2>&1 || true
+          if grep -lF "$INTERNAL_TOKEN" "$RUNNER_TEMP/flag-service.log" "$RUNNER_TEMP/vantage.log" 2>/dev/null; then
+            echo "the internal token appears in the files above"; exit 1
+          fi
+
+  summary:
+    needs: [changes, service, web, workflows, stack]
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Every needed job passed or was skipped
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "results: $RESULTS"
+          case " $RESULTS " in *" failure "*|*" cancelled "*) exit 1 ;; esac
