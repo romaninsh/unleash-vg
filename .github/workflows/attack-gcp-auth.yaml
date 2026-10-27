@@ -1,0 +1,64 @@
+# THROWAWAY - do not merge. A pull request trying to get GCP credentials the way the deploy
+# workflows do. The job passes only if every attempt is refused.
+name: attack-gcp-auth
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  attempt:
+    name: a pull request gets no GCP credentials
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      # 1. exactly what deploy-*.yaml do: unleash-vg's protected-main provider and the deployer
+      - id: own_provider
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/unleash-vg-main
+          service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
+          create_credentials_file: false
+
+      # 2. the shared golf provider (any romaninsh repository and ref), still as the deployer
+      - id: shared_provider_as_deployer
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/github
+          service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
+          token_format: access_token
+          create_credentials_file: false
+
+      # 3. the shared provider's own federated identity, no service account: read-only probes
+      - id: shared_provider_direct
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/github
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+        if: steps.shared_provider_direct.outcome == 'success'
+      - id: direct_reads
+        if: steps.shared_provider_direct.outcome == 'success'
+        run: |
+          reached=0
+          try() { if "$@" > /dev/null 2>&1; then echo "REACHED: $*"; reached=1; else echo "refused: $*"; fi; }
+          try gcloud run services describe unleash-vg-sdk --project inlaid-agility-461020-e4 --region europe-west2
+          try gcloud secrets versions access latest --secret unleash-vg-surreal-pass --project inlaid-agility-461020-e4
+          try gcloud artifacts docker images list europe-west2-docker.pkg.dev/inlaid-agility-461020-e4/unleash-vg
+          echo "reached=$reached" >> "$GITHUB_OUTPUT"
+
+      - name: Every attempt was refused
+        env:
+          OWN: ${{ steps.own_provider.outcome }}
+          SHARED_AS_DEPLOYER: ${{ steps.shared_provider_as_deployer.outcome }}
+          DIRECT_REACHED: ${{ steps.direct_reads.outputs.reached }}
+        run: |
+          echo "1. unleash-vg-main provider as the deployer: $OWN"
+          echo "2. shared provider as the deployer: $SHARED_AS_DEPLOYER"
+          echo "3. shared provider directly, reached a resource: ${DIRECT_REACHED:-no token}"
+          [ "$OWN" != success ] && [ "$SHARED_AS_DEPLOYER" != success ] && [ "$DIRECT_REACHED" != 1 ]
