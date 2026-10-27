@@ -116,5 +116,22 @@ export function loadConfig(path: string): BenchConfig {
   }
   const cfg = parseConfig(raw, dirname(resolve(path)));
   if (process.env.PORT) cfg.port = Number(process.env.PORT);
+  // A deployed bench keeps its SDK tokens out of the config file (and the image):
+  // TESTBENCH_TOKENS = {"<target>": {"<environment>": {"backend": "…", "frontend": "…"}}}.
+  if (process.env.TESTBENCH_TOKENS) {
+    let byTarget: any;
+    try {
+      byTarget = JSON.parse(process.env.TESTBENCH_TOKENS);
+    } catch (e) {
+      fail(`TESTBENCH_TOKENS is not valid JSON: ${(e as Error).message}`);
+    }
+    for (const [name, tokens] of Object.entries(byTarget ?? {})) {
+      const target = cfg.targets.find((t) => t.name === name) ?? fail(`TESTBENCH_TOKENS names unknown target "${name}"`);
+      target.tokens = parseConfig(
+        { targets: [{ name, baseUrl: target.baseUrl, brands: { type: 'static', brands: [] }, tokens }] },
+        '.',
+      ).targets[0]!.tokens;
+    }
+  }
   return cfg;
 }

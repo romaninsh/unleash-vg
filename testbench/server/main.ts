@@ -16,7 +16,8 @@ try {
 }
 
 const app = createBenchApp(config, { staticDir: join(import.meta.dirname, '..', 'dist') });
-const port = await app.listen(config.port);
+// localhost unless HOST says otherwise (the image sets 0.0.0.0)
+const port = await app.listen(config.port, process.env.HOST);
 console.log(`\nTest bench running at http://localhost:${port}`);
 for (const t of config.targets) console.log(`  target ${t.name} → ${t.baseUrl} (brands: ${t.brands.type})`);
 

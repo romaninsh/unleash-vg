@@ -87,7 +87,12 @@ export interface StressSnapshot {
   failure?: string;
 }
 
-export const LIMITS = { concurrency: 256, durationSec: 3600 };
+// A public bench lowers these (BENCH_STRESS_MAX_WORKERS, BENCH_STRESS_MAX_SECONDS) so it can show a
+// live flag change without being a load tool against the target.
+export const LIMITS = {
+  concurrency: Number(process.env.BENCH_STRESS_MAX_WORKERS ?? 256),
+  durationSec: Number(process.env.BENCH_STRESS_MAX_SECONDS ?? 3600),
+};
 
 // ---------------------------------------------------------------- histogram
 

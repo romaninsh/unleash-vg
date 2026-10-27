@@ -1,0 +1,21 @@
+{
+  "port": 8080,
+  "targets": [
+    {
+      "name": "unleash-vg",
+      "baseUrl": "https://unleash-vg-sdk-129027965449.europe-west2.run.app",
+      "brands": {
+        "type": "static",
+        "brands": [
+          { "key": "bank-a", "displayName": "Northwind Air" },
+          { "key": "bank-b", "displayName": "Harbour Bank" },
+          { "key": "bank-c", "displayName": "Greenfield Stores" },
+          { "key": "bank-d", "displayName": "Contoso Air (prospect)" },
+          { "key": "bank-e", "displayName": "Parcelpoint (prospect)" },
+          { "key": "bank-f", "displayName": "Roadside Club (prospect)" }
+        ]
+      },
+      "contextFields": { "brand": "brand", "customer": "userId" }
+    }
+  ]
+}
