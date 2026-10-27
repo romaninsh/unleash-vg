@@ -11,6 +11,9 @@ ARG SERVER=romaninsh/vantage-server:1.8.6
 # image is for another platform.
 FROM --platform=$BUILDPLATFORM ${WEB_DEV} AS web
 ARG API=flags
+# 1 = the sign-in page lists the seeded demo users (the hosted demo); unset for real use
+ARG VITE_DEMO_SIGN_IN=
+ENV VITE_DEMO_SIGN_IN=${VITE_DEMO_SIGN_IN}
 COPY --chown=node:node web/${API} /app
 RUN node /opt/vantage/entrypoint/main.mjs build --out /app/out
 

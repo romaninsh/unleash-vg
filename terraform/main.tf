@@ -66,23 +66,63 @@ resource "google_service_account_iam_member" "workload_identity_user" {
   member             = "principalSet://iam.googleapis.com/projects/${local.project_number}/locations/global/workloadIdentityPools/golf/attribute.unleash_deploy/protected-main"
 }
 
-# Push images to the shared repository only, not every repository in the project.
+# unleash-vg's own image repository. Writing to the shared cloud-run-source-deploy would let the
+# deployer replace other apps' images (chtags-api, golf-backend) and so run code as them.
+resource "google_artifact_registry_repository" "images" {
+  location      = local.region
+  repository_id = "unleash-vg"
+  description   = "unleash-vg's admin, sdk and bench images (the deploy workflows push here)"
+  format        = "DOCKER"
+
+  cleanup_policy_dry_run = false
+  cleanup_policies {
+    id     = "keep-10-newest"
+    action = "KEEP"
+    most_recent_versions {
+      keep_count = 10
+    }
+  }
+  cleanup_policies {
+    id     = "delete-the-rest"
+    action = "DELETE"
+    condition {
+      older_than = "604800s" # 7 days; the KEEP policy above wins for the 10 newest
+    }
+  }
+}
+
 resource "google_artifact_registry_repository_iam_member" "writer" {
   project    = local.project_id
   location   = local.region
-  repository = "cloud-run-source-deploy"
+  repository = google_artifact_registry_repository.images.name
   role       = "roles/artifactregistry.writer"
   member     = google_service_account.github_unleash_vg.member
 }
 
-# run.developer on the three unleash-vg services only (not the project's other services, and not
-# chtags' run.admin): the deploys update them and never set their invoker policy.
+# What `gcloud run deploy` of a new revision to an existing service needs, and nothing else: no
+# delete, no IAM policy changes, no jobs, no SSH (roles/run.developer has all of those).
+resource "google_project_iam_custom_role" "deployer" {
+  role_id     = "unleashVgDeployer"
+  title       = "unleash-vg deployer"
+  description = "Deploy a new revision to an existing unleash-vg Cloud Run service."
+  permissions = [
+    "run.services.get",
+    "run.services.update",
+    "run.revisions.get",
+    "run.revisions.list",
+    "run.configurations.get",
+    "run.routes.get",
+    "run.operations.get",
+  ]
+}
+
+# Bound on the three unleash-vg services only, not the project's other services.
 resource "google_cloud_run_v2_service_iam_member" "deployer" {
   for_each = google_cloud_run_v2_service.service
   project  = local.project_id
   location = local.region
   name     = each.value.name
-  role     = "roles/run.developer"
+  role     = google_project_iam_custom_role.deployer.id
   member   = google_service_account.github_unleash_vg.member
 }
 
