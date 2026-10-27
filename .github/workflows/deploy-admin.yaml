@@ -1,0 +1,111 @@
+# The admin (api/flags.yaml with web/flags on vantage-server, ./Dockerfile) to Cloud Run as
+# unleash-vg-admin, on every merge to main that changes it. Auth: Workload Identity Federation as
+# github-unleash-vg (vantage-terraform's module "unleash_vg"); secrets from Secret Manager, never
+# the image or this repository.
+name: deploy-admin
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'application.yaml'
+      - 'api/**'
+      - 'table/**'
+      - 'datasource/**'
+      - 'action/**'
+      - 'script/**'
+      - 'page/**'
+      - 'web/**'
+      - 'Dockerfile'
+      - '.dockerignore'
+      - '.github/workflows/deploy-admin.yaml'
+  workflow_dispatch:
+
+permissions: {}
+
+# A second merge waits for the running deploy; neither is cancelled.
+concurrency:
+  group: deploy-admin
+  cancel-in-progress: false
+
+env:
+  PROJECT: inlaid-agility-461020-e4
+  REGION: europe-west2
+  SERVICE: unleash-vg-admin
+  IMAGE: europe-west2-docker.pkg.dev/inlaid-agility-461020-e4/cloud-run-source-deploy/unleash-vg-admin
+  # Cloud Run's deterministic URLs (<name>-<project number>.<region>.run.app)
+  URL: https://unleash-vg-admin-129027965449.europe-west2.run.app
+  SDK_URL: https://unleash-vg-sdk-129027965449.europe-west2.run.app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/github
+          service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
+
+      - name: Build and push the image
+        run: |
+          gcloud auth configure-docker europe-west2-docker.pkg.dev --quiet
+          docker build --platform linux/amd64 -t "$IMAGE:$GITHUB_SHA" -t "$IMAGE:latest" .
+          docker push "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:latest"
+
+      # Scales to zero, one instance at most, CPU billed only while a request (or an open
+      # WebSocket) runs; the hour-long timeout keeps a signed-in page's socket open. The sign-in
+      # tokens file is a secret volume at the path api/flags.yaml includes.
+      - name: Deploy
+        env:
+          SURREAL_NS: ${{ vars.SURREAL_NS }}
+          SURREAL_DB: ${{ vars.SURREAL_DB }}
+        run: |
+          gcloud run deploy "$SERVICE" --project "$PROJECT" --region "$REGION" \
+            --image "$IMAGE:$GITHUB_SHA" \
+            --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi --cpu-boost --timeout 3600 \
+            --network default --subnet default --vpc-egress all-traffic \
+            --set-env-vars "VANTAGE_PROFILE=prod,SURREAL_NS=$SURREAL_NS,SURREAL_DB=$SURREAL_DB,FLAG_SERVICE_URL=$SDK_URL" \
+            --set-secrets "SECRET_SURREAL_URL=unleash-vg-surreal-url:latest,SECRET_INTERNAL_TOKEN=unleash-vg-internal-token:latest,/app/project/private/web-tokens.yaml=unleash-vg-web-tokens:latest"
+
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        id: invoker
+        with:
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/github
+          service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
+          token_format: id_token
+          id_token_audience: ${{ env.URL }}
+          id_token_include_email: true
+      # The page, the datasources (/v1/ready), and a sign-in over the WebSocket with a demo token:
+      # a missing tokens file or database fails here, not at a visitor's first click.
+      - name: Smoke check
+        env:
+          ID_TOKEN: ${{ steps.invoker.outputs.id_token }}
+        run: |
+          auth=(-H "Authorization: Bearer $ID_TOKEN")
+          curl -fsS -m 60 "${auth[@]}" "$URL/" | grep -q 'id="root"'
+          ready="$(curl -sS -m 60 "${auth[@]}" "$URL/v1/ready")"
+          echo "$URL/v1/ready: $ready"
+          echo "$ready" | grep -q '"ready":true'
+          node -e '
+            const ws = new WebSocket(process.env.URL.replace(/^http/, "ws") + "/v1/ws",
+              { headers: { Authorization: "Bearer " + process.env.ID_TOKEN } });
+            const fail = (why) => { console.log("sign-in:", why); process.exit(1); };
+            setTimeout(() => fail("no reply in 30 s"), 30000);
+            ws.onerror = () => fail("socket error");
+            ws.onopen = () => ws.send(JSON.stringify({ t: "hello", id: 1, protocol: 1, token: "admin@example.com:demo" }));
+            ws.onmessage = (m) => {
+              const f = JSON.parse(m.data);
+              if (f.id !== 1) return;
+              if (f.t !== "welcome") fail(f.t + " " + (f.message ?? ""));
+              console.log("sign-in: welcome", f.principal ?? "");
+              process.exit(0);
+            };'
