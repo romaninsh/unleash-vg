@@ -50,7 +50,7 @@ jobs:
           persist-credentials: false
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
         with:
-          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/github
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/unleash-vg-main
           service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
       - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db # v3.0.1
 
@@ -71,6 +71,7 @@ jobs:
         run: |
           gcloud run deploy "$SERVICE" --project "$PROJECT" --region "$REGION" \
             --image "$IMAGE:$GITHUB_SHA" \
+            --service-account "unleash-vg-runtime@$PROJECT.iam.gserviceaccount.com" \
             --min-instances 0 --max-instances 1 --cpu 1 --memory 512Mi --cpu-boost --timeout 3600 \
             --network default --subnet default --vpc-egress all-traffic \
             --set-env-vars "VANTAGE_PROFILE=prod,SURREAL_NS=$SURREAL_NS,SURREAL_DB=$SURREAL_DB,FLAG_SERVICE_URL=$SDK_URL" \
@@ -79,7 +80,7 @@ jobs:
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
         id: invoker
         with:
-          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/github
+          workload_identity_provider: projects/129027965449/locations/global/workloadIdentityPools/golf/providers/unleash-vg-main
           service_account: github-unleash-vg@inlaid-agility-461020-e4.iam.gserviceaccount.com
           token_format: id_token
           id_token_audience: ${{ env.URL }}

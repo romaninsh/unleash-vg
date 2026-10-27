@@ -20,9 +20,7 @@ locals {
   project_number = "129027965449"
   region         = "europe-west2"
   repository     = "romaninsh/unleash-vg"
-  # The services' runtime identity, as pizza-1-shop's.
-  runtime_account = "${local.project_number}-compute@developer.gserviceaccount.com"
-  services        = ["unleash-vg-admin", "unleash-vg-sdk", "unleash-vg-bench"]
+  services       = ["unleash-vg-admin", "unleash-vg-sdk", "unleash-vg-bench"]
   secrets = {
     # admin (vantage-server): wss://<user>:<pass>@<host>/rpc?auth=database
     "unleash-vg-surreal-url" = "SurrealDB Cloud URL with the database user's credentials (admin)"
@@ -43,12 +41,29 @@ resource "google_service_account" "github_unleash_vg" {
   display_name = "GitHub Actions deployer for romaninsh/unleash-vg"
 }
 
-# Let the unleash-vg repository (and only it) impersonate the deployer through the existing
-# `golf` workload identity pool.
+# unleash-vg's own provider in the existing `golf` pool (golf-infra's `github` provider admits any
+# romaninsh repository and ref). It admits only unleash-vg's runs on main while main is a protected
+# branch (the token's ref_protected claim), and stamps them with an attribute the shared provider
+# never sets, so the deployer below can't be reached through it.
+resource "google_iam_workload_identity_pool_provider" "main" {
+  workload_identity_pool_id          = "golf"
+  workload_identity_pool_provider_id = "unleash-vg-main"
+  display_name                       = "unleash-vg, protected main"
+  attribute_condition                = "assertion.repository == '${local.repository}' && assertion.ref == 'refs/heads/main' && string(assertion.ref_protected) == 'true'"
+  attribute_mapping = {
+    "google.subject"           = "assertion.sub"
+    "attribute.repository"     = "assertion.repository"
+    "attribute.unleash_deploy" = "'protected-main'"
+  }
+  oidc {
+    issuer_uri = "https://token.actions.githubusercontent.com"
+  }
+}
+
 resource "google_service_account_iam_member" "workload_identity_user" {
   service_account_id = google_service_account.github_unleash_vg.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "principalSet://iam.googleapis.com/projects/${local.project_number}/locations/global/workloadIdentityPools/golf/attribute.repository/${local.repository}"
+  member             = "principalSet://iam.googleapis.com/projects/${local.project_number}/locations/global/workloadIdentityPools/golf/attribute.unleash_deploy/protected-main"
 }
 
 # Push images to the shared repository only, not every repository in the project.
@@ -60,17 +75,29 @@ resource "google_artifact_registry_repository_iam_member" "writer" {
   member     = google_service_account.github_unleash_vg.member
 }
 
-# run.developer (not chtags' run.admin): the deploys don't set the invoker policy; public access
-# is granted once below.
-resource "google_project_iam_member" "run_developer" {
-  project = local.project_id
-  role    = "roles/run.developer"
-  member  = google_service_account.github_unleash_vg.member
+# run.developer on the three unleash-vg services only (not the project's other services, and not
+# chtags' run.admin): the deploys update them and never set their invoker policy.
+resource "google_cloud_run_v2_service_iam_member" "deployer" {
+  for_each = google_cloud_run_v2_service.service
+  project  = local.project_id
+  location = local.region
+  name     = each.value.name
+  role     = "roles/run.developer"
+  member   = google_service_account.github_unleash_vg.member
+}
+
+# ── Runtime identity ─────────────────────────────────────────────────────
+# What the containers run as: it can read the unleash-vg secrets below and nothing else (not the
+# project's default compute account, which holds Editor).
+
+resource "google_service_account" "runtime" {
+  account_id   = "unleash-vg-runtime"
+  display_name = "unleash-vg's Cloud Run services (admin, sdk, bench)"
 }
 
 # Cloud Run deploys need actAs on the runtime service account.
-resource "google_service_account_iam_member" "act_as_compute" {
-  service_account_id = "projects/${local.project_id}/serviceAccounts/${local.runtime_account}"
+resource "google_service_account_iam_member" "act_as_runtime" {
+  service_account_id = google_service_account.runtime.name
   role               = "roles/iam.serviceAccountUser"
   member             = google_service_account.github_unleash_vg.member
 }
@@ -97,7 +124,7 @@ resource "google_secret_manager_secret_iam_member" "runtime_reads" {
   for_each  = google_secret_manager_secret.secret
   secret_id = each.value.id
   role      = "roles/secretmanager.secretAccessor"
-  member    = "serviceAccount:${local.runtime_account}"
+  member    = google_service_account.runtime.member
 }
 
 # ── The three services, public ───────────────────────────────────────────
@@ -111,8 +138,10 @@ resource "google_cloud_run_v2_service" "service" {
   location = local.region
   ingress  = "INGRESS_TRAFFIC_ALL"
 
+  # ignore_changes keeps a service on the identity it was created with; the deploys pass
+  # --service-account unleash-vg-runtime.
   template {
-    service_account = local.runtime_account
+    service_account = google_service_account.runtime.email
     scaling {
       min_instance_count = 0
       max_instance_count = 1
@@ -145,6 +174,10 @@ output "deployer_email" {
   value = google_service_account.github_unleash_vg.email
 }
 
+output "runtime_email" {
+  value = google_service_account.runtime.email
+}
+
 output "workload_identity_provider" {
-  value = "projects/${local.project_number}/locations/global/workloadIdentityPools/golf/providers/github"
+  value = google_iam_workload_identity_pool_provider.main.name
 }
