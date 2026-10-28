@@ -15,15 +15,17 @@ licence, for anyone who needs a free alternative to Unleash or a similar service
 [![Demo SDK API](https://img.shields.io/badge/DEMO-SDK_API-1f5fa8?style=for-the-badge)](https://unleash-vg-sdk-129027965449.europe-west2.run.app/health)
 [![Demo bench](https://img.shields.io/badge/DEMO-BENCH-8a4fbf?style=for-the-badge)](https://unleash-vg-bench-129027965449.europe-west2.run.app/)
 
-The demo runs on sample data. Sign in to the admin as one of the users listed on its sign-in page
+The demo runs on sample data. Sign in to the admin as any user listed on its sign-in page
 (password `demo`), change a flag, and watch the bench's mock bank follow it. Everyone shares the
 same demo, so expect other people's changes. Each service sleeps when idle, so the first request
 after a quiet spell takes a few seconds.
 
 ## The Vantage Desktop App
 
-Vantage UI is like an empty shell with a built-in agent: you tell it what you want to build, and it
-builds the backend app you want. That's how unleash-vg was built.
+This version of Unleash is built in Vantage UI with low code: YAML, plus small Rhai snippets.
+Vantage UI is free and runs on a Mac, so use it to add the features you need to your own copy. In
+production it runs on `vantage-server`, Vantage's cloud-native server. Not sure how something
+works? Ask the LLM inside Vantage UI.
 
 Open your clone of this repository in Vantage UI on a Mac. The desktop app is the admin, and it
 also builds the web admin (`web/flags/`) in a Docker container and serves it; the web admin talks
@@ -33,8 +35,8 @@ Every flag with its state in each environment, brand overrides and when apps las
 
 ![Flags](docs/screenshots/flags.png)
 
-One flag: the rule per environment, brand overrides, the share of evaluations served ON, and its
-history:
+A flag's page: the rule per environment, brand overrides, the share of evaluations served ON, and
+its history:
 
 ![A flag](docs/screenshots/flag.png)
 
@@ -57,7 +59,9 @@ API tokens per environment, created here or imported from an existing Unleash:
 
 ## Running it locally
 
-You need Docker, Node 24 or later, and [Vantage UI](https://vantage-ui.com) 1.9 or later (free).
+You need [Vantage UI](https://vantage-ui.com) 1.9 or later (free) and Docker. Vantage UI needs
+nothing else: it builds and runs everything in containers. The setup scripts in step 3 use `curl`
+and `python3`; a Mac without `python3` offers to install Apple's command-line tools, which have it.
 
 1. Create `.env` from `.env.example`, with a token of your own:
 
@@ -87,10 +91,10 @@ You need Docker, Node 24 or later, and [Vantage UI](https://vantage-ui.com) 1.9 
 The SDK API listens on `http://127.0.0.1:4380` (`curl http://127.0.0.1:4380/health` answers
 `{"health":"GOOD"}`).
 
-To try it from the SDK side, start the bench. Its config needs the SurrealDB port the stack
-published (`docker compose ls`, then `docker compose -p <project> -f composer.yaml port surrealdb
-8000`); the
-`unleash` target in the example config is optional, for comparing against a real Unleash:
+To try it from the SDK side, start the bench, which runs on your machine and needs Node 24 or
+later. Its config needs the SurrealDB port the stack published (`docker compose ls`, then
+`docker compose -p <project> -f composer.yaml port surrealdb 8000`); the `unleash` target in the
+example config is optional, for comparing against a real Unleash:
 
 ```
 cd testbench
@@ -100,7 +104,7 @@ npm start                                                 # http://localhost:430
 ```
 
 The mock bank follows a flag change within a few seconds. The local bench also reads the brand
-list from SurrealDB; the hosted one has it in its config.
+list from SurrealDB; the hosted bench has it in its config.
 
 ## Fork and Tweak
 
@@ -137,7 +141,7 @@ Our own pipeline is a worked example for Google Cloud Run:
   the SDK API and the admin under the `ci` profile) and runs the database rules and the web probes
   against it. Its `summary` job must pass before anything merges to `main`.
 - `deploy-admin.yaml`, `deploy-sdk.yaml` and `deploy-bench.yaml` deploy on a merge to `main` that
-  changes their files. Each service scales to zero and runs one instance at most.
+  changes their files. Each service scales to zero and never runs more than a single instance.
 - `terraform/` is the cloud side: a deployer that only a protected `main` can use, which can push
   images and deploy new revisions of these three services and nothing else; a runtime account that
   can read only unleash-vg's secrets; the secrets themselves; and the three public services.
@@ -145,7 +149,7 @@ Our own pipeline is a worked example for Google Cloud Run:
 ## Why SurrealDB
 
 Data lives in [SurrealDB](https://surrealdb.com) because of its live queries. Vantage subscribes
-to them (`LIVE SELECT`), so a change one person makes appears straight away for everyone else, in
+to them (`LIVE SELECT`), so a change someone makes appears straight away for everyone else, in
 the desktop app and in the web admin, without anyone reloading.
 
 Vantage itself is database-agnostic. It ships datasources for SQL databases and MongoDB as well, so
