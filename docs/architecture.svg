@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="372" viewBox="0 0 960 372" role="img" aria-label="Vantage UI with an LLM deploys vantage-server (unleash-admin), which serves the React frontend and the WebSocket API; Vantage OSS with an LLM deploys unleash-sdk; both use SurrealDB; unleash-bench, a static React app, tests unleash-sdk">
+  <style>
+    .t { font-family: "Balsamiq Sans", "Comic Neue", "Comic Sans MS", "Chalkboard SE", "Segoe Print", cursive; text-anchor: middle; }
+    .h { font-size: 20px; font-weight: 700; fill: #f2f0ea; }
+    .s { font-size: 14px; fill: #b9b6ad; }
+    .l { font-size: 14px; fill: #9c9a93; font-style: italic; text-anchor: start; }
+    .ink { fill: none; stroke: #ece9e1; stroke-width: 2.1; stroke-linecap: round; stroke-linejoin: round; }
+    .ink2 { fill: none; stroke: #ece9e1; stroke-width: 1; stroke-linecap: round; opacity: .3; }
+    .dash { stroke-dasharray: 6 6; opacity: .8; }
+    .shadow { fill: #0b0b0f; opacity: .55; }
+  </style>
+  <rect width="960" height="372" rx="14" fill="#1c1d22"/>
+
+  <path class="shadow" d="M28.8 19.1 Q159.5 14.3 290.6 18.1 Q292.6 56.6 290.6 94.1 Q160.5 97.3 30.8 93.4 Q26.7 56.5 30.5 16.9 Z" transform="translate(5 6)"/>
+  <path d="M28.8 19.1 Q159.5 14.3 290.6 18.1 Q292.6 56.6 290.6 94.1 Q160.5 97.3 30.8 93.4 Q26.7 56.5 30.5 16.9 Z" fill="#3a3524"/>
+  <path class="ink" d="M28.8 19.1 Q159.5 14.3 290.6 18.1 Q292.6 56.6 290.6 94.1 Q160.5 97.3 30.8 93.4 Q26.7 56.5 30.5 16.9 Z"/>
+  <path class="ink2" d="M33.5 20.9 Q161.1 18.8 286.1 21.0 Q291.1 56.5 287.4 91.2 Q161.0 95.0 32.7 90.6 Q30.8 55.6 32.1 20.5 Z"/>
+  <text class="t h" x="160" y="53">Vantage UI</text>
+  <text class="t s" x="160" y="74">desktop app + LLM</text>
+
+  <path class="ink" d="M160 102 Q159.6 115.8 160 132"/>
+  <path class="ink" d="M153.5 120.7 L160 132 L165.9 120.4"/>
+  <text class="t l" x="172" y="128">deploy</text>
+
+  <path class="shadow" d="M31.1 142.1 Q160.6 139.9 288.9 141.4 Q293.2 180.0 289.8 217.2 Q161.0 219.9 29.7 217.6 Q27.4 181.1 30.0 141.2 Z" transform="translate(5 6)"/>
+  <path d="M31.1 142.1 Q160.6 139.9 288.9 141.4 Q293.2 180.0 289.8 217.2 Q161.0 219.9 29.7 217.6 Q27.4 181.1 30.0 141.2 Z" fill="#203a30"/>
+  <path class="ink" d="M31.1 142.1 Q160.6 139.9 288.9 141.4 Q293.2 180.0 289.8 217.2 Q161.0 219.9 29.7 217.6 Q27.4 181.1 30.0 141.2 Z"/>
+  <path class="ink2" d="M32.8 144.5 Q159.7 141.8 286.6 145.1 Q290.3 179.3 288.0 214.9 Q160.9 218.3 33.3 215.0 Q30.0 180.5 34.1 144.7 Z"/>
+  <text class="t h" x="160" y="177">vantage-server</text>
+  <text class="t s" x="160" y="198">unleash-admin</text>
+
+  <path class="ink" d="M95 226 Q93.7 239.5 90 256"/>
+  <path class="ink" d="M86.4 243.5 L90 256 L98.6 246.2"/>
+  
+
+  <path class="ink" d="M225 226 Q228 240.1 230 256"/>
+  <path class="ink" d="M222.4 245.5 L230 256 L234.8 243.9"/>
+  
+
+  <path class="shadow" d="M29.6 265.7 Q90.7 263.9 149.0 266.8 Q151.9 303.8 149.1 340.9 Q91.2 344.3 30.3 341.1 Q26.9 304.2 29.1 267.1 Z" transform="translate(5 6)"/>
+  <path d="M29.6 265.7 Q90.7 263.9 149.0 266.8 Q151.9 303.8 149.1 340.9 Q91.2 344.3 30.3 341.1 Q26.9 304.2 29.1 267.1 Z" fill="#203a30"/>
+  <path class="ink" d="M29.6 265.7 Q90.7 263.9 149.0 266.8 Q151.9 303.8 149.1 340.9 Q91.2 344.3 30.3 341.1 Q26.9 304.2 29.1 267.1 Z"/>
+  <path class="ink2" d="M34.0 270.0 Q91.0 267.0 147.7 268.4 Q148.8 303.4 145.9 337.8 Q90.3 341.3 33.6 339.0 Q30.5 303.3 34.0 268.3 Z"/>
+  <text class="t h" x="90" y="301">React</text>
+  <text class="t s" x="90" y="322">frontend</text>
+
+  <path class="shadow" d="M169.7 267.0 Q229.0 263.0 288.8 267.0 Q293.3 305.1 288.8 343.0 Q229.2 346.2 170.2 342.4 Q166.4 303.3 169.3 266.2 Z" transform="translate(5 6)"/>
+  <path d="M169.7 267.0 Q229.0 263.0 288.8 267.0 Q293.3 305.1 288.8 343.0 Q229.2 346.2 170.2 342.4 Q166.4 303.3 169.3 266.2 Z" fill="#203a30"/>
+  <path class="ink" d="M169.7 267.0 Q229.0 263.0 288.8 267.0 Q293.3 305.1 288.8 343.0 Q229.2 346.2 170.2 342.4 Q166.4 303.3 169.3 266.2 Z"/>
+  <path class="ink2" d="M171.9 269.7 Q230.5 266.5 287.0 267.8 Q289.0 305.0 286.1 339.5 Q231.0 340.8 174.0 339.9 Q171.2 305.1 173.7 268.8 Z"/>
+  <text class="t h" x="230" y="301">API</text>
+  <text class="t s" x="230" y="322">WebSocket</text>
+
+  <path class="shadow" d="M328 186 L327.5 304 A52 11 0 0 0 432 304 L432.5 186 Z" transform="translate(5 6)"/>
+  <path d="M328 186 L327.5 304 A52 11 0 0 0 432 304 L432.5 186 Z" fill="#1d3940"/>
+  <ellipse cx="380" cy="186" rx="52" ry="11" fill="#2c4a52"/>
+  <path class="ink" d="M328 186 L329 304 A52 11 0 0 0 432 304 L431 186"/>
+  <ellipse class="ink" cx="380" cy="186" rx="52" ry="11"/>
+  <text class="t h" x="380" y="253">SurrealDB</text>
+  <text class="t s" x="380" y="273">flags, usage</text>
+<path class="ink dash" d="M290 304 Q312.1 293.2 328 284"/>
+<path class="ink dash" d="M470 212 Q448.9 206.2 432 202"/>
+
+  <path class="shadow" d="M471.0 18.1 Q584.6 15.3 700.6 17.6 Q703.6 55.8 699.2 93.5 Q586.2 98.2 470.3 94.9 Q468.0 55.2 470.4 17.1 Z" transform="translate(5 6)"/>
+  <path d="M471.0 18.1 Q584.6 15.3 700.6 17.6 Q703.6 55.8 699.2 93.5 Q586.2 98.2 470.3 94.9 Q468.0 55.2 470.4 17.1 Z" fill="#3a3524"/>
+  <path class="ink" d="M471.0 18.1 Q584.6 15.3 700.6 17.6 Q703.6 55.8 699.2 93.5 Q586.2 98.2 470.3 94.9 Q468.0 55.2 470.4 17.1 Z"/>
+  <path class="ink2" d="M473.0 21.1 Q585.7 19.1 697.0 20.2 Q699.9 55.2 697.4 91.1 Q585.2 94.0 473.6 90.7 Q470.6 54.8 472.5 21.1 Z"/>
+  <text class="t h" x="585" y="53">Vantage OSS</text>
+  <text class="t s" x="585" y="74">Rust crates + LLM</text>
+
+  <path class="ink" d="M585 102 Q583.2 118.3 585 132"/>
+  <path class="ink" d="M577.3 121.5 L585 132 L589.7 119.9"/>
+  <text class="t l" x="597" y="128">deploy</text>
+
+  <path class="shadow" d="M469.5 141.3 Q585.4 138.8 698.9 142.7 Q703.8 181.0 701.0 218.5 Q586.1 219.8 470.7 218.3 Q467.6 181.0 468.8 141.1 Z" transform="translate(5 6)"/>
+  <path d="M469.5 141.3 Q585.4 138.8 698.9 142.7 Q703.8 181.0 701.0 218.5 Q586.1 219.8 470.7 218.3 Q467.6 181.0 468.8 141.1 Z" fill="#1f2f45"/>
+  <path class="ink" d="M469.5 141.3 Q585.4 138.8 698.9 142.7 Q703.8 181.0 701.0 218.5 Q586.1 219.8 470.7 218.3 Q467.6 181.0 468.8 141.1 Z"/>
+  <path class="ink2" d="M472.0 144.0 Q584.0 140.8 697.3 146.1 Q699.2 179.1 696.3 215.4 Q584.4 217.9 474.2 214.8 Q470.4 180.7 472.7 144.8 Z"/>
+  <text class="t h" x="585" y="177">unleash-sdk</text>
+  <text class="t s" x="585" y="198">Axum, Unleash SDK API</text>
+
+  <path class="shadow" d="M738.9 141.3 Q835.8 140.2 929.1 143.1 Q933.0 179.1 929.3 218.3 Q834.2 219.9 739.4 218.4 Q737.1 180.0 741.2 140.9 Z" transform="translate(5 6)"/>
+  <path d="M738.9 141.3 Q835.8 140.2 929.1 143.1 Q933.0 179.1 929.3 218.3 Q834.2 219.9 739.4 218.4 Q737.1 180.0 741.2 140.9 Z" fill="#33263d"/>
+  <path class="ink" d="M738.9 141.3 Q835.8 140.2 929.1 143.1 Q933.0 179.1 929.3 218.3 Q834.2 219.9 739.4 218.4 Q737.1 180.0 741.2 140.9 Z"/>
+  <path class="ink2" d="M742.8 144.5 Q833.8 140.8 926.8 144.0 Q929.3 181.1 927.7 215.7 Q834.8 218.9 744.2 215.8 Q740.4 180.2 742.6 144.8 Z"/>
+  <text class="t h" x="835" y="177">unleash-bench</text>
+  <text class="t s" x="835" y="198">static React</text>
+
+  <path class="ink" d="M736 180 Q722 180 708 180"/>
+  <path class="ink" d="M719.4 173.8 L708 180 L719.4 186.2"/>
+  
+<text class="t l" x="704" y="134">testing</text>
+</svg>
