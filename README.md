@@ -22,8 +22,10 @@ after a quiet spell takes a few seconds.
 
 ## The Vantage Desktop App
 
-Vantage UI is like an empty shell with a built-in agent: you tell it what you want to build, and it
-builds the backend app you want. That's how unleash-vg was built.
+This version of Unleash is built in Vantage UI with low code: YAML, plus small Rhai snippets.
+Vantage UI is free and runs on a Mac, so use it to add the features you need to your own copy. In
+production it runs on `vantage-server`, Vantage's cloud-native server. Not sure how something
+works? Ask the LLM inside Vantage UI.
 
 Open your clone of this repository in Vantage UI on a Mac. The desktop app is the admin, and it
 also builds the web admin (`web/flags/`) in a Docker container and serves it; the web admin talks
@@ -57,7 +59,9 @@ API tokens per environment, created here or imported from an existing Unleash:
 
 ## Running it locally
 
-You need Docker, Node 24 or later, and [Vantage UI](https://vantage-ui.com) 1.9 or later (free).
+You need [Vantage UI](https://vantage-ui.com) 1.9 or later (free) and Docker. Vantage UI needs
+nothing else: it builds and runs everything in containers. The setup scripts in step 3 use `curl`
+and `python3`; a Mac without `python3` offers to install Apple's command-line tools, which have it.
 
 1. Create `.env` from `.env.example`, with a token of your own:
 
@@ -87,10 +91,10 @@ You need Docker, Node 24 or later, and [Vantage UI](https://vantage-ui.com) 1.9 
 The SDK API listens on `http://127.0.0.1:4380` (`curl http://127.0.0.1:4380/health` answers
 `{"health":"GOOD"}`).
 
-To try it from the SDK side, start the bench. Its config needs the SurrealDB port the stack
-published (`docker compose ls`, then `docker compose -p <project> -f composer.yaml port surrealdb
-8000`); the
-`unleash` target in the example config is optional, for comparing against a real Unleash:
+To try it from the SDK side, start the bench, which runs on your machine and needs Node 24 or
+later. Its config needs the SurrealDB port the stack published (`docker compose ls`, then
+`docker compose -p <project> -f composer.yaml port surrealdb 8000`); the `unleash` target in the
+example config is optional, for comparing against a real Unleash:
 
 ```
 cd testbench
