@@ -34,41 +34,39 @@ API tokens per environment, created here or imported from an existing Unleash:
 
 ## How it fits together
 
-```mermaid
----
-config:
-  look: handDrawn
-  theme: neutral
----
-flowchart LR
-  ui["Vantage UI<br/>desktop app"]
-  admin["unleash-admin<br/>Vantage project on vantage-server"]
-  sdk["unleash-sdk<br/>Rust, built on Vantage crates"]
-  bench["unleash-bench<br/>plain Node app"]
+![Vantage UI deploys vantage-server (the admin's React frontend and WebSocket API); Vantage OSS deploys unleash-sdk; both use SurrealDB; unleash-bench tests unleash-sdk](docs/architecture.svg)
 
-  ui -- "builds and pushes" --> admin
-  admin -- "flags" --> sdk
-  bench -- "Unleash SDK" --> sdk
-```
+- **unleash-admin** was built in Vantage UI with its agent: the tables, pages and rules are YAML
+  the agent edits with you. `deploy-admin` deploys it on `vantage-server`, the server Vantage runs
+  locally, which serves the React frontend and the WebSocket API it talks to.
+- **unleash-sdk** is a Rust service written with an LLM on Vantage's open-source crates. It reads
+  SurrealDB through them and answers Unleash SDKs on `/api/client` and `/api/frontend`.
+- **unleash-bench** is for testing: a static React app, served by a small Node server, with a mock
+  bank whose screens follow the flags and a stress test. It talks only to the SDK API, like your
+  apps would.
 
-- **unleash-admin** is a Vantage project. In Vantage UI its tables, pages and rules are YAML that
-  the agent edits with you. `deploy-admin` packs the project and the built `web/flags` onto
-  `vantage-server`, the server Vantage runs locally, and pushes that image.
-- **unleash-sdk** is a Rust service that reads SurrealDB through Vantage's crates and answers
-  Unleash SDKs on `/api/client` and `/api/frontend`.
-- **unleash-bench** is a plain Node app using the official Unleash Node SDK: a mock bank whose
-  screens follow the flags, and a stress test. It talks only to the SDK API, like your apps would.
+## Why SurrealDB
+
+Data lives in [SurrealDB](https://surrealdb.com) because of its live queries. Vantage subscribes
+to them (`LIVE SELECT`), so a change one person makes appears straight away for everyone else, in
+the desktop admin and in the web frontend, without anyone reloading.
+
+Vantage itself is database-agnostic. It ships datasources for SQL databases and MongoDB as well, so
+the admin's tables, pages and API stay the same on another database: point `datasource/flags.yaml`
+at it and adjust the tables' storage settings. Two parts are written in SurrealQL and would move
+with it: the database rules in `tests/schema.surql` and `tests/events.surql` (the append-only audit
+log, the atomic flag card save, the revision stamps), and the SDK API's queries in `service/src`.
 
 ## How big it is
 
 Non-blank lines in each repository's tracked files on 2026-10-27, generated code left out
 (Unleash's `frontend/src/openapi`, our `vantage.gen.ts`):
 
-| | [Unleash](https://github.com/Unleash/unleash) | unleash-vg |
+| | [Unleash](https://github.com/Unleash/unleash) (LoC) | unleash-vg (LoC) |
 |---|---:|---:|
-| Admin web app | 192,872 | 2,324 |
-| Admin backend: API, data model, rules | 103,676 | 2,481 |
-| SDK API | (in the backend) | 1,247 |
+| Admin web app | 192,872 [React](https://react.dev) | 2,324 [React](https://react.dev) |
+| Admin backend: API, data model, rules | 103,676 [Express](https://expressjs.com) | 2,481 [Vantage](https://vantage-ui.com) |
+| SDK API | (in the backend) | 1,247 [Axum](https://github.com/tokio-rs/axum) |
 | **Total** | **296,548** | **6,052** |
 | Tests | 122,798 | 1,691 |
 
@@ -76,25 +74,14 @@ That's 49 times less code to read, review and keep running. Most of the differen
 tables, pages, access rules and the audit log are YAML it runs, so there's no API layer, ORM or
 form code to write. Unleash also does more (projects, segments, change requests, SSO), and
 unleash-vg covers the flags × environments × brands model described in `docs/spec/`. The bench
-(3,124 lines) has no counterpart in Unleash and isn't counted.
+(3,124 LoC) has no counterpart in Unleash and isn't counted.
 
-## What's in the repository
+## Fork and Tweak
 
-| Folder | What it is |
-|---|---|
-| root (`table/`, `page/`, `api/`, …) | The admin app, a Vantage project. `api/flags.yaml` is the API the web app uses. |
-| `web/flags/` | The admin web app (React and Vite). |
-| `service/` | The SDK API, in Rust: what Unleash SDKs connect to. |
-| `testbench/` | A mock bank app that runs on the flags, and a stress test. Point it at unleash-vg and at Unleash, side by side. |
-| `tests/` | The SurrealDB schema, rules and demo data, plus test scripts. |
-| `docs/spec/` | The specification the service is built to. |
-
-Data lives in SurrealDB.
-
-## Make it your own
-
-unleash-vg is meant to be forked and changed. Rename the brands, add a field to flags, or swap the
-rollout rules for your own:
+unleash-vg is simple on purpose. It does the flag model in `docs/spec/` and stops there, so the
+whole app stays small enough to read in an afternoon. Need a feature it doesn't have? Open it in
+Vantage UI and ask the built-in agent to add it. Rename the brands, add a field to flags, or swap
+the rollout rules for your own:
 
 1. Clone this repository.
 2. Download [Vantage](https://vantage-ui.com) 1.9 or later. It's free.
