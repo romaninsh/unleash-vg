@@ -53,7 +53,8 @@ check "allowlists are tidied and de-duplicated" '"7,8,9"' \
 8;9,,7 '; RETURN flag_env:\`ex1@uat\`.default_allowlist;")"
 check "inactive brands can't get new overrides" yes "$(errs "inactive" "$(Q "CREATE brand_override SET scope = 'ex1@uat', brand = brand:\`bank-f\`;")")"
 check "a brand with overrides can't be deleted" yes "$(errs "deactivate it instead" "$(Q "DELETE brand:\`bank-a\`;")")"
-check "audit events can't be changed" yes "$(errs "cannot be changed" "$(Q "UPDATE audit_event SET summary = 'x';")")"
+Q "CREATE audit_event:rules_check SET type = 'check', summary = 'rules check';" >/dev/null
+check "audit events can't be changed" yes "$(errs "cannot be changed" "$(Q "UPDATE audit_event:rules_check SET summary = 'x';")")"
 Q "UPDATE flag:ex1 SET archived = true; UPDATE flag:ex1 SET archived = false;" >/dev/null
 check "revive switches every environment OFF" "0" "$(Q "RETURN count(SELECT id FROM flag_env WHERE flag = flag:ex1 AND enabled = true);")"
 check "archive stamps and revive clears archived_at" "null" "$(Q "RETURN flag:ex1.archived_at;")"
