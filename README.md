@@ -1,9 +1,12 @@
 # unleash-vg
 
-A feature-flag service your Unleash SDKs can talk to without code changes. It keeps Unleash's SDK
-API (`/api/client` and `/api/frontend`, with the same tokens, ETags and CORS), and replaces the admin
-side with a simpler model built for white-label products: flags × environments × brands, each flag
-on, off or a percentage, with customer allowlists and per-brand overrides.
+A feature-flag service for Unleash SDKs. It keeps Unleash's SDK API (`/api/client` and
+`/api/frontend`, with the same tokens, ETags and CORS), so SDKs that poll it work unchanged, and
+replaces the admin side with a simpler model built for white-label products: flags × environments
+× brands, each flag on, off or a percentage, with customer allowlists and per-brand overrides.
+Variants, other constraint types, streaming and Unleash's Admin API are left out on purpose; the
+full list is in [`docs/spec/01-scope.md`](docs/spec/01-scope.md), and
+[`docs/spec/09-acceptance.md`](docs/spec/09-acceptance.md) is how compatibility is checked.
 
 It was built by Claude Opus 5.5 with [Vantage](https://vantage-ui.com) and is shared under the MIT
 licence, for anyone who needs a free alternative to Unleash or a similar service.
@@ -12,12 +15,19 @@ licence, for anyone who needs a free alternative to Unleash or a similar service
 [![Demo SDK API](https://img.shields.io/badge/DEMO-SDK_API-1f5fa8?style=for-the-badge)](https://unleash-vg-sdk-129027965449.europe-west2.run.app/health)
 [![Demo bench](https://img.shields.io/badge/DEMO-BENCH-8a4fbf?style=for-the-badge)](https://unleash-vg-bench-129027965449.europe-west2.run.app/)
 
-The demo runs on sample data: sign in to the admin as any listed user (password `demo`), change a
-flag, and watch the bench's mock bank follow it. Everyone shares the same demo, so expect other
-people's changes. Each service sleeps when idle, so the first request after a quiet spell takes a
-few seconds.
+The demo runs on sample data. Sign in to the admin as one of the users listed on its sign-in page
+(password `demo`), change a flag, and watch the bench's mock bank follow it. Everyone shares the
+same demo, so expect other people's changes. Each service sleeps when idle, so the first request
+after a quiet spell takes a few seconds.
 
-## The admin app
+## The Vantage Desktop App
+
+Vantage UI is like an empty shell with a built-in agent: you tell it what you want to build, and it
+builds the backend app you want. That's how unleash-vg was built.
+
+Open your clone of this repository in Vantage UI on a Mac. The desktop app is the admin, and it
+also builds the web admin (`web/flags/`) in a Docker container and serves it; the web admin talks
+to the desktop app over a WebSocket.
 
 Every flag with its state in each environment, brand overrides and when apps last asked for it:
 
@@ -34,67 +44,20 @@ API tokens per environment, created here or imported from an existing Unleash:
 
 ## How it fits together
 
-![Vantage UI deploys vantage-server (the admin's React frontend and WebSocket API); Vantage OSS deploys unleash-sdk; both use SurrealDB; unleash-bench tests unleash-sdk](docs/architecture.svg)
+![Vantage UI deploys vantage-server (the admin's React frontend and WebSocket API); the Vantage crates power unleash-sdk; vantage-server and unleash-sdk both use SurrealDB; unleash-bench tests unleash-sdk](docs/architecture.svg)
 
-- **unleash-admin** was built in Vantage UI with its agent: the tables, pages and rules are YAML
-  the agent edits with you. `deploy-admin` deploys it on `vantage-server`, the server Vantage runs
-  locally, which serves the React frontend and the WebSocket API it talks to.
-- **unleash-sdk** is a Rust service written with an LLM on Vantage's open-source crates. It reads
-  SurrealDB through them and answers Unleash SDKs on `/api/client` and `/api/frontend`.
-- **unleash-bench** is for testing: a static React app, served by a small Node server, with a mock
-  bank whose screens follow the flags and a stress test. It talks only to the SDK API, like your
-  apps would.
-
-## Why SurrealDB
-
-Data lives in [SurrealDB](https://surrealdb.com) because of its live queries. Vantage subscribes
-to them (`LIVE SELECT`), so a change one person makes appears straight away for everyone else, in
-the desktop admin and in the web frontend, without anyone reloading.
-
-Vantage itself is database-agnostic. It ships datasources for SQL databases and MongoDB as well, so
-the admin's tables, pages and API stay the same on another database: point `datasource/flags.yaml`
-at it and adjust the tables' storage settings. Two parts are written in SurrealQL and would move
-with it: the database rules in `tests/schema.surql` and `tests/events.surql` (the append-only audit
-log, the atomic flag card save, the revision stamps), and the SDK API's queries in `service/src`.
-
-## How big it is
-
-Non-blank lines in each repository's tracked files on 2026-10-27, generated code left out
-(Unleash's `frontend/src/openapi`, our `vantage.gen.ts`):
-
-| | [Unleash](https://github.com/Unleash/unleash) (LoC) | unleash-vg (LoC) |
-|---|---:|---:|
-| Admin web app | 192,872 [React](https://react.dev) | 2,324 [React](https://react.dev) |
-| Admin backend: API, data model, rules | 103,676 [Express](https://expressjs.com) | 2,481 [Vantage](https://vantage-ui.com) |
-| SDK API | (in the backend) | 1,247 [Axum](https://github.com/tokio-rs/axum) |
-| **Total** | **296,548** | **6,052** |
-| Tests | 122,798 | 1,691 |
-
-That's 49 times less code to read, review and keep running. Most of the difference is Vantage:
-tables, pages, access rules and the audit log are YAML it runs, so there's no API layer, ORM or
-form code to write. Unleash also does more (projects, segments, change requests, SSO), and
-unleash-vg covers the flags × environments × brands model described in `docs/spec/`. The bench
-(3,124 LoC) has no counterpart in Unleash and isn't counted.
-
-## Fork and Tweak
-
-unleash-vg is simple on purpose. It does the flag model in `docs/spec/` and stops there, so the
-whole app stays small enough to read in an afternoon. Need a feature it doesn't have? Open it in
-Vantage UI and ask the built-in agent to add it. Rename the brands, add a field to flags, or swap
-the rollout rules for your own:
-
-1. Clone this repository.
-2. Download [Vantage](https://vantage-ui.com) 1.9 or later. It's free.
-3. Open the folder in Vantage and start it locally (below). The admin runs against your own
-   SurrealDB and SDK API, with the demo data.
-4. Ask Vantage's built-in agent for the change. It edits the tables, pages and rules (all YAML)
-   while the app reloads in front of you, and the web app's pages are plain React in `web/flags/`.
-5. Deploy the admin and the SDK API: the Vantage deploy skill packages the admin for any container
-   host, and our own pipeline below does it for Google Cloud Run on every merge.
+- **The admin** (`unleash-admin`) is a Vantage project: tables, pages and rules in YAML. In
+  production it runs on `vantage-server`, the same server Vantage UI runs locally, which serves
+  the web admin and the WebSocket API it talks to.
+- **The SDK API** (`unleash-sdk`, in `service/`) is a Rust service on the Vantage crates, written
+  with an LLM. It reads SurrealDB through them and is what your apps' SDKs call.
+- **The bench** (`unleash-bench`, in `testbench/`) is for testing: a static React app served by a
+  small Node server, with a mock bank whose screens follow the flags and a stress test. It reads
+  flags through the SDK API, like your apps would.
 
 ## Running it locally
 
-You need Docker, Node 22 or later, and [Vantage](https://vantage-ui.com) 1.9 or later.
+You need Docker, Node 24 or later, and [Vantage UI](https://vantage-ui.com) 1.9 or later (free).
 
 1. Create `.env` from `.env.example`, with a token of your own:
 
@@ -102,38 +65,71 @@ You need Docker, Node 22 or later, and [Vantage](https://vantage-ui.com) 1.9 or 
    sed "s/^SECRET_INTERNAL_TOKEN=.*/SECRET_INTERNAL_TOKEN=$(openssl rand -hex 32)/" .env.example > .env
    ```
 
-2. Open this folder in Vantage. It starts SurrealDB and the SDK API from `composer.yaml`.
-3. Load the schema and the demo data, in this order:
+2. Open this folder in Vantage UI. It starts SurrealDB and the SDK API from `composer.yaml`; the
+   first start builds the SDK API's image and takes a few minutes. The Services panel shows when
+   both are running.
+3. Load the schema and the sample data, in this order, then the sign-in list and the six local SDK
+   tokens (`docs/spec/reference-data/default-tokens.json`, the bench's example config uses them):
 
    ```
-   for f in schema seed events; do tests/surql.sh tests/$f.surql; done
+   for f in schema seed events; do tests/surql.sh tests/$f.surql -q; done
    tests/sync_web_users.sh
+   tests/import_default_tokens.sh
    ```
 
-4. In Vantage, open Services and start the `flags` web app. It opens in your browser.
+   The scripts find the stack by the folder's name; with a clone under another name, set
+   `COMPOSE_PROJECT` to the name the Services panel shows. To start again from scratch:
+   `echo 'REMOVE DATABASE flags;' | tests/surql.sh -`, then run step 3 again.
+4. In Vantage UI, open the Services panel and start the `flags` web admin. It opens in your
+   browser.
 5. Sign in as any demo user with the password `demo`, for example `admin@example.com`.
 
-The SDK API listens on `http://127.0.0.1:4380`. In local development it accepts six fixed tokens,
-listed in `docs/spec/reference-data/default-tokens.json`.
+The SDK API listens on `http://127.0.0.1:4380` (`curl http://127.0.0.1:4380/health` answers
+`{"health":"GOOD"}`).
 
-To try it from the SDK side, start the bench:
+To try it from the SDK side, start the bench. Its config needs the SurrealDB port the stack
+published (`docker compose ls`, then `docker compose -p <project> -f composer.yaml port surrealdb
+8000`); the
+`unleash` target in the example config is optional, for comparing against a real Unleash:
 
 ```
 cd testbench
 npm install
-cp testbench.config.example.json testbench.config.json   # set the SurrealDB port, add your Unleash
+cp testbench.config.example.json testbench.config.json   # set the SurrealDB port
 npm start                                                 # http://localhost:4300
 ```
 
-Change a flag in the admin app and watch the mock bank follow it within a few seconds.
+The mock bank follows a flag change within a few seconds. The local bench also reads the brand
+list from SurrealDB; the hosted one has it in its config.
+
+## Fork and Tweak
+
+unleash-vg is simple on purpose. It does the flag model in `docs/spec/` and stops there, so the
+whole app stays small enough to read in an afternoon. Need a feature it doesn't have? Ask the
+built-in agent to add it: rename the brands, add a field to flags, or swap the rollout rules for
+your own.
+
+1. Set it up as in [Running it locally](#running-it-locally).
+2. Open the agent panel in Vantage UI (the title-bar button, or Cmd-Shift-A) and ask for the
+   change, for example "add an owner field to flags". The first open downloads what the agent
+   needs, and a sign-in runs inside the panel. It edits the YAML while the admin reloads in front
+   of you; the web admin's pages are plain React in `web/flags/`.
+3. Deploy it, as in [Deploying your own](#deploying-your-own).
 
 ## Deploying your own
 
 Three images, each its own Dockerfile: the admin (`Dockerfile`), the SDK API
-(`service/Dockerfile`) and the bench (`testbench/Dockerfile`). The SDK API finds its SurrealDB
-through `SURREAL_URL`, `SURREAL_USER`, `SURREAL_PASS` and `SURREAL_AUTH`. The admin reads the
-`prod` profile (`application.yaml`) from the environment, and its sign-in tokens file is mounted at
-`/app/project/private/web-tokens.yaml`. Neither image holds a secret.
+(`service/Dockerfile`) and the bench (`testbench/Dockerfile`). No image holds a secret.
+
+- **The SDK API** reads `SURREAL_URL`, `SURREAL_USER`, `SURREAL_PASS` and `SURREAL_AUTH` (the user
+  and password default to `root`, so set them), and `INTERNAL_TOKEN`, the bearer token the admin
+  reads compiled flags with. Create SDK tokens in the admin's API tokens page, or with
+  `flag-service create-token <name> <backend|frontend> <environment>`; never import the six local
+  tokens into a hosted database.
+- **The admin** reads the `prod` profile (`application.yaml`) from the environment, and its sign-in
+  tokens file is mounted at `/app/project/private/web-tokens.yaml`. The Vantage deploy skill (in
+  `.agents/skills/vantage-deploy/`, which Vantage UI installs) shows how to package it for any
+  container host.
 
 Our own pipeline is a worked example for Google Cloud Run:
 
@@ -146,8 +142,36 @@ Our own pipeline is a worked example for Google Cloud Run:
   images and deploy new revisions of these three services and nothing else; a runtime account that
   can read only unleash-vg's secrets; the secrets themselves; and the three public services.
 
-Opening the folder in Vantage is also how you change the app: tables, pages and rules are YAML
-files, and Vantage's agent can edit them with you.
+## Why SurrealDB
+
+Data lives in [SurrealDB](https://surrealdb.com) because of its live queries. Vantage subscribes
+to them (`LIVE SELECT`), so a change one person makes appears straight away for everyone else, in
+the desktop app and in the web admin, without anyone reloading.
+
+Vantage itself is database-agnostic. It ships datasources for SQL databases and MongoDB as well, so
+the admin's tables, pages and API stay the same on another database: point `datasource/flags.yaml`
+at it and adjust the tables' storage settings. Moving off SurrealDB also means rewriting the parts
+written in SurrealQL: the database rules in `tests/schema.surql` and `tests/events.surql` (the
+append-only audit log, the atomic flag card save, the revision stamps), and the SDK API's queries
+in `service/src`.
+
+## How big it is
+
+Non-blank lines of code in each repository's tracked files on 2026-10-27, with tests counted apart
+and generated code left out (Unleash's `frontend/src/openapi`, our `vantage.gen.ts`):
+
+| | [Unleash](https://github.com/Unleash/unleash) (LoC) | unleash-vg (LoC) |
+|---|---:|---:|
+| Admin web app | 192,872 [React](https://react.dev) | 2,324 [React](https://react.dev) |
+| Admin backend: API, data model, rules | 103,676 [Express](https://expressjs.com) | 2,481 [Vantage](https://vantage-ui.com) |
+| SDK API | (in the backend) | 1,247 [Axum](https://github.com/tokio-rs/axum) |
+| **Total** | **296,548** | **6,052** |
+| Tests | 122,798 | 1,691 |
+
+That's 49 times less code to read, review and keep running. Most of the difference is Vantage:
+tables, pages, access rules and the audit log are YAML it runs, so there's no API layer, ORM or
+form code to write. Unleash also does more (projects, segments, change requests, SSO). The bench
+(3,124 LoC) has no counterpart in Unleash and isn't counted.
 
 ## Licence
 

@@ -1,6 +1,6 @@
 # Profiles: where the datasources point. Each env file sets SECRET_SURREAL_URL (credentials and
 # ?auth= inside the URL), SURREAL_NS, SURREAL_DB, FLAG_SERVICE_URL and SECRET_INTERNAL_TOKEN.
-#   local  the composer stack (.env, see README "Local setup")
+#   local  the composer stack (.env, see README "Running it locally")
 #   ci     the stack job in .github/workflows/checks.yaml (.env.ci, written by the job)
 #   prod   SurrealDB Cloud and the deployed flag service (.env.prod; Cloud Run passes the same keys)
 profiles:
