@@ -6,6 +6,7 @@ import { schema, type Schema } from "./vantage.gen";
 import { readToken } from "./auth";
 import { Gate } from "./Gate";
 import { App } from "./App";
+import { Splash } from "./Splash";
 import "./styles.css";
 
 // One client for the page; it connects to /v1/ws on the origin that served it.
@@ -14,6 +15,8 @@ const db = createVantage<Schema>({ schema, token: readToken });
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
+    {/* the About splash: over the sign-in page on a session's first visit */}
+    <Splash />
     <VantageProvider db={db} fallback={<Gate />}>
       <Gate>
         <App />

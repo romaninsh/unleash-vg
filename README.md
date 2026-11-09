@@ -20,6 +20,12 @@ The demo runs on sample data. Sign in to the admin as any user listed on its sig
 same demo, so expect other people's changes. Each service sleeps when idle, so the first request
 after a quiet spell takes a few seconds.
 
+A browser session opens the admin on a splash (`web/flags/src/Splash.tsx`): what the service is,
+the build prompt's first line, and how it was built, in numbers kept in `web/flags/src/about.ts`.
+The session numbers come from the agent's logs (`scripts/session_stats.py <session log>`), the
+rest from file and test counts; the top of `about.ts` lists how to refresh each. "About this demo"
+in the sidebar opens it again.
+
 ## The Vantage Desktop App
 
 This version of Unleash is built in Vantage UI with low code: YAML, plus small Rhai snippets.
