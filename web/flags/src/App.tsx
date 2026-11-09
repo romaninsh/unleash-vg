@@ -11,6 +11,7 @@ import { BrandsPage } from "./pages/admin/BrandsPage";
 import { TokensPage } from "./pages/admin/TokensPage";
 import { UsersPage } from "./pages/admin/UsersPage";
 import { SettingsPage } from "./pages/admin/SettingsPage";
+import { openAbout } from "./Splash";
 
 // A data router: the flag page's "Leave without saving?" guard (useBlocker) needs one.
 // Made on first render (the route elements below use components declared further down).
@@ -115,6 +116,7 @@ const Sidebar = observer(() => {
           {role === "editor" && <div className="muted small">edits {me.editable_environments?.replace(/,/g, ", ") || "no environments"}</div>}
         </div>
       )}
+      <button className="link aboutlink" onClick={openAbout}>About this demo</button>
       <button className="signout" onClick={signOut}>Sign out</button>
     </nav>
   );

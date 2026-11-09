@@ -39,7 +39,11 @@ async function signIn(page: Page, email: string, password = "demo") {
   await page.getByRole("button", { name: "Sign in" }).click();
 }
 
-test.beforeEach(async ({ page }) => guardWrites(page));
+test.beforeEach(async ({ page }) => {
+  // the About splash shows once per browser session; splash.e2e.ts is the test about it
+  await page.addInitScript(() => sessionStorage.setItem("flags.splash.seen", "1"));
+  await guardWrites(page);
+});
 
 test("a wrong password is refused without saying which field was wrong", async ({ page }) => {
   await signIn(page, "tom.berg@example.com", "nope");

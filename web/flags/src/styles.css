@@ -27,6 +27,7 @@ main { flex: 1; min-width: 0; padding: 14px 22px 40px; max-width: 1400px; }
 .sidebar .who { padding: 10px 8px; border-top: 1px solid #2f3749; font-size: 12px; }
 .sidebar .whoname { color: #fff; font-weight: 600; }
 .sidebar .muted { color: #9aa3b5; }
+.sidebar .aboutlink { align-self: flex-start; margin: 0 8px 6px; color: #aebbff; font-size: 12px; }
 .signout { margin: 4px 8px 0; background: transparent; color: #cfd6ff; border-color: #3a4459; }
 .role { display: inline-block; padding: 0 6px; border-radius: 8px; font-size: 11px; margin: 4px 0; background: #39415a; color: #fff; }
 .role-admin { background: #7a2e2e; } .role-editor { background: #2d4a8a; }
