@@ -2,6 +2,7 @@ import { useState, type FormEvent, type ReactNode } from "react";
 import { useConnection } from "@vantage-ui/client/react";
 import { readToken, saveToken, useDb } from "./auth";
 import { DemoUsers, demoSignIn } from "./DemoUsers";
+import { track } from "./analytics";
 
 /** Shows the sign-in form until the server accepts the token, then the app. */
 export function Gate({ children }: { children?: ReactNode }) {
@@ -17,6 +18,8 @@ function SignIn({ failed, detail }: { failed: boolean; detail?: string }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  // the form was filled from the demo accounts list (until the email is typed over)
+  const [picked, setPicked] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
@@ -26,6 +29,7 @@ function SignIn({ failed, detail }: { failed: boolean; detail?: string }) {
     setBusy(false);
     // Don't say which field was wrong (spec 05, Login).
     if (connection.halted) setMessage("Invalid credentials");
+    else track("sign_in", { method: picked ? "demo_user" : "password" });
   }
 
   return (
@@ -35,7 +39,7 @@ function SignIn({ failed, detail }: { failed: boolean; detail?: string }) {
         <p className="muted">Sign in with your work email.</p>
         <label>
           Email
-          <input type="email" autoComplete="username" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
+          <input type="email" autoComplete="username" value={email} onChange={(e) => { setEmail(e.target.value); setPicked(false); }} required autoFocus />
         </label>
         <label>
           Password
@@ -52,6 +56,7 @@ function SignIn({ failed, detail }: { failed: boolean; detail?: string }) {
           onPick={(pickedEmail, pickedPassword) => {
             setEmail(pickedEmail);
             setPassword(pickedPassword);
+            setPicked(true);
           }}
         />
       )}
