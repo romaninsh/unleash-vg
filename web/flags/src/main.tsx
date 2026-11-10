@@ -7,7 +7,10 @@ import { readToken } from "./auth";
 import { Gate } from "./Gate";
 import { App } from "./App";
 import { Splash } from "./Splash";
+import { startAnalytics } from "./analytics";
 import "./styles.css";
+
+startAnalytics();
 
 // One client for the page; it connects to /v1/ws on the origin that served it.
 // The token is read on every connect, so signing in only needs a reconnect.

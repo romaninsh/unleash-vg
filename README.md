@@ -152,6 +152,33 @@ Our own pipeline is a worked example for Google Cloud Run:
   images and deploy new revisions of these three services and nothing else; a runtime account that
   can read only unleash-vg's secrets; the secrets themselves; and the three public services.
 
+## Analytics
+
+The web admin reports to Google Analytics (`web/flags/src/analytics.ts`), the same GA4 property as
+vantage-ui.com. The tag loads only when the page is served from `flags.demo.vantage-ui.com`.
+Anywhere else, including localhost, `*.run.app` and e2e runs, nothing is loaded or sent, and each
+event is logged to the browser console as `[ga] name params` instead. A fork deploying its own copy
+sends nothing until it changes `PRODUCTION_HOST` and `MEASUREMENT_ID` there.
+
+Page views come from GA's enhanced measurement, which counts the router's history changes. The
+events:
+
+- `about_open` `{trigger: "auto" | "link"}`: the splash on a session's first visit, or "About this
+  demo" in the sidebar.
+- `outbound_click` `{link_url}`: a click on any link to another host.
+- `sign_in` `{method: "demo_user" | "password"}`: a successful sign-in, from the demo accounts
+  list or typed in.
+- `demo_action` `{action}`: `toggle_flag` (an environment's switch), `save_rules` (an
+  environment's rules and brand overrides), `create_flag`, and `issue_token` or `import_token`.
+
+To add one, call `track()` where the thing has succeeded:
+
+```ts
+import { track } from "../analytics";
+
+track("demo_action", { action: "archive_flag" });
+```
+
 ## Why SurrealDB
 
 Data lives in [SurrealDB](https://surrealdb.com) because of its live queries. Vantage subscribes

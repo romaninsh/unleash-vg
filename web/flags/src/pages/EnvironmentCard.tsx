@@ -3,6 +3,7 @@ import { observer, useCollection, useRecord } from "@vantage-ui/client/react";
 import { useConfig, useDb, usePermissions } from "../auth";
 import { ENVIRONMENTS, friendlyError, listItems, relTime, ruleClass, type Env } from "../format";
 import { explain, isEnabled, type Feature } from "../preview";
+import { track } from "../analytics";
 import { isConflict, modeOf, problems, rolloutFor, saveFields, sameRules, type Draft, type Mode, type Rule } from "./card-draft";
 
 type Props = {
@@ -64,6 +65,7 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
     setError(null);
     const r = await edit.value.patch({ enabled: next, expected_revision: fe.revision ?? 0, updated_by: email });
     if (!r.ok) return isConflict(r.error.message) ? setConflict(friendlyError(r.error.message)) : setError(friendlyError(r.error.message));
+    track("demo_action", { action: "toggle_flag" });
     if (draft) setRebaseFrom(fe.revision ?? 0);
   }
 
@@ -74,6 +76,7 @@ export const EnvironmentCard = observer(({ flag, env, archived, draft, setDraft,
     const r = await edit.value.patch(saveFields(draft, email));
     setBusy(false);
     if (!r.ok) return isConflict(r.error.message) ? setConflict(friendlyError(r.error.message)) : setError(friendlyError(r.error.message));
+    track("demo_action", { action: "save_rules" });
     setDraft(null);
     setConflict(null);
   }

@@ -3,6 +3,7 @@ import { observer, useCollection } from "@vantage-ui/client/react";
 import { useDb, usePermissions } from "../../auth";
 import { ENVIRONMENTS, friendlyError, randomHex, relTime } from "../../format";
 import { ShowOnce } from "../../components/ShowOnce";
+import { track } from "../../analytics";
 import type { TokenAdmin } from "../../vantage.gen";
 
 /** API tokens (spec 04, spec 05 screen 8, admins). Secrets are never stored or shown again. */
@@ -30,6 +31,7 @@ export const TokensPage = observer(() => {
       new_secret: value, created_by: email, admin_scope: "all",
     });
     if (!r.ok) return setFormError(friendlyError(r.error.message));
+    track("demo_action", { action: imported ? "import_token" : "issue_token" });
     setName("");
     setSecret("");
     if (!imported) setShown(value);

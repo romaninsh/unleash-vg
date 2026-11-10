@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ABOUT, RUNS } from "./about";
 import { COMPARISON } from "./comparison";
+import { track } from "./analytics";
 import "./splash.css";
 
 // The first thing a browser session sees, over the sign-in page: what this app is, that it is a
@@ -10,7 +11,10 @@ import "./splash.css";
 
 const SEEN = "flags.splash.seen";
 
-export const openAbout = () => window.dispatchEvent(new Event("flags:about"));
+export const openAbout = () => {
+  track("about_open", { trigger: "link" });
+  window.dispatchEvent(new Event("flags:about"));
+};
 
 // `code` in a comparison line renders as code
 const withCode = (text: string) =>
@@ -58,6 +62,12 @@ export function Splash() {
   const button = useRef<HTMLButtonElement>(null);
   const close = () => { sessionStorage.setItem(SEEN, "1"); setOpen(false); };
 
+  // once per page load (a ref survives StrictMode's second effect run)
+  const counted = useRef(false);
+  useEffect(() => {
+    if (open && !counted.current) track("about_open", { trigger: "auto" });
+    counted.current = true;
+  }, []);
   useEffect(() => {
     const again = () => setOpen(true);
     window.addEventListener("flags:about", again);

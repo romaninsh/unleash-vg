@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router";
 import { useDb, usePermissions } from "../auth";
+import { track } from "../analytics";
 
 /** Turns the database's refusal into a sentence for the person. */
 function explain(message: string, name: string): string {
@@ -40,6 +41,7 @@ export function NewFlagDialog({ onClose }: { onClose: () => void }) {
     });
     setBusy(false);
     if (!r.ok) return setError(explain(r.error.message, name));
+    track("demo_action", { action: "create_flag" });
     onClose();
     navigate(`/flags/${encodeURIComponent(name)}`);
   }
