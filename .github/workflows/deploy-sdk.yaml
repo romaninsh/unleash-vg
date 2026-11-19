@@ -1,6 +1,6 @@
 # The SDK API (service/, the flag service) to Cloud Run as unleash-vg-sdk, on every merge to main
 # that changes it. Auth: Workload Identity Federation as github-unleash-vg (vantage-terraform's
-# module "unleash_vg"); secrets from Secret Manager, never the image or this repository.
+# module "unleash_vg_gcp"); secrets from Secret Manager, never the image or this repository.
 name: deploy-sdk
 
 on:

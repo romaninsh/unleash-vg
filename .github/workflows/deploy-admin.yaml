@@ -1,6 +1,6 @@
 # The admin (api/flags.yaml with web/flags on vantage-server, ./Dockerfile) to Cloud Run as
 # unleash-vg-admin, on every merge to main that changes it. Auth: Workload Identity Federation as
-# github-unleash-vg (vantage-terraform's module "unleash_vg"); secrets from Secret Manager, never
+# github-unleash-vg (vantage-terraform's module "unleash_vg_gcp"); secrets from Secret Manager, never
 # the image or this repository.
 name: deploy-admin
 

@@ -148,7 +148,7 @@ Our own pipeline is a worked example for Google Cloud Run:
   against it. Its `summary` job must pass before anything merges to `main`.
 - `deploy-admin.yaml`, `deploy-sdk.yaml` and `deploy-bench.yaml` deploy on a merge to `main` that
   changes their files. Each service scales to zero and never runs more than a single instance.
-- `terraform/` is the cloud side: a deployer that only a protected `main` can use, which can push
+- The cloud side is vantage-terraform's `unleash_vg_gcp` module: a deployer that only a protected `main` can use, which can push
   images and deploy new revisions of these three services and nothing else; a runtime account that
   can read only unleash-vg's secrets; the secrets themselves; and the three public services.
 
