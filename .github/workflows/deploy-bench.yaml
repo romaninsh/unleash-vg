@@ -1,6 +1,6 @@
 # The test bench (testbench/, against the deployed SDK API) to Cloud Run as unleash-vg-bench, on
 # every merge to main that changes it. Auth: Workload Identity Federation as github-unleash-vg
-# (vantage-terraform's module "unleash_vg"); its SDK tokens from Secret Manager.
+# (vantage-terraform's module "unleash_vg_gcp"); its SDK tokens from Secret Manager.
 name: deploy-bench
 
 on:
